@@ -34,6 +34,7 @@ import { CategoryFilterModal } from "./components/app/CategoryFilterModal";
 import { ScanTab } from "./components/app/ScanTab";
 import { StockTab } from "./components/app/StockTab";
 import { SyncNotice } from "./components/app/SyncNotice";
+import { GeminiAssistant } from "./components/GeminiAssistant/GeminiAssistant";
 
 
 type ActionModalState =
@@ -80,6 +81,8 @@ export default function App() {
   const [stockScanMode, setStockScanMode] = useState<StockScanMode>("add");
   const [scannerInputMode, setScannerInputMode] = useState<ScannerInputMode>("hardware");
   const [isCompactView, setIsCompactView] = useState(false);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isAssistantMinimized, setIsAssistantMinimized] = useState(false);
 
   const showToast = useCallback((text: string) => {
     const id = Date.now();
@@ -484,8 +487,46 @@ export default function App() {
     }
   };
 
-  const handleRemoveItem = async (barcode: string) => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cet article ?")) {
+  const handleSetExactQuantity = useCallback(
+    async (barcode: string, quantity: number) => {
+      triggerHaptic("light");
+      const existingItem = inventory.find((item) => item.barcode === barcode);
+      if (!existingItem) {
+        throw new Error("Article introuvable dans l'inventaire.");
+      }
+
+      const sanitizedQuantity = Math.max(0, Math.trunc(quantity));
+      const updatedItem = {
+        ...existingItem,
+        quantity: sanitizedQuantity,
+        lastUpdated: Date.now(),
+        lastMovement: sanitizedQuantity - existingItem.quantity,
+      };
+
+      setInventory((prev) =>
+        prev.map((item) => (item.barcode === barcode ? updatedItem : item)),
+      );
+
+      try {
+        await syncItem(updatedItem);
+      } catch (error) {
+        console.error("Erreur de synchronisation Supabase:", error);
+        setInventory((prev) =>
+          prev.map((item) => (item.barcode === barcode ? existingItem : item)),
+        );
+        const message = error instanceof Error
+          ? error.message
+          : "Impossible de synchroniser la quantité exacte.";
+        setSyncError(message);
+        showToast("Erreur de synchronisation Supabase");
+        throw new Error(message);
+      }
+    },
+    [inventory, showToast],
+  );
+
+  const handleRemoveItemConfirmed = useCallback(
+    async (barcode: string) => {
       triggerHaptic("warning");
       const previousInventory = inventory;
       setInventory((prev) => prev.filter((i) => i.barcode !== barcode));
@@ -498,15 +539,33 @@ export default function App() {
       } catch (error) {
         console.error("Erreur de suppression Supabase:", error);
         setInventory(previousInventory);
-        setSyncError(
-          error instanceof Error
-            ? error.message
-            : "Impossible de supprimer cet article dans Supabase.",
-        );
+        const message = error instanceof Error
+          ? error.message
+          : "Impossible de supprimer cet article dans Supabase.";
+        setSyncError(message);
         showToast("Erreur de suppression Supabase");
+        throw new Error(message);
       }
+    },
+    [inventory, refreshPendingCount, showToast],
+  );
+
+  const handleRemoveItem = async (barcode: string) => {
+    if (confirm("Êtes-vous sûr de vouloir supprimer cet article ?")) {
+      void handleRemoveItemConfirmed(barcode);
     }
   };
+
+  const handleAssistantToggle = useCallback(() => {
+    if (isAssistantOpen) {
+      setIsAssistantOpen(false);
+      setIsAssistantMinimized(true);
+      return;
+    }
+
+    setIsAssistantOpen(true);
+    setIsAssistantMinimized(false);
+  }, [isAssistantOpen]);
 
   const handleManualProductSave = async (
     product: ProductLookupData,
@@ -884,7 +943,13 @@ export default function App() {
         )}
       </main>
 
-      <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <AppNavigation
+        activeTab={activeTab}
+        assistantActive={isAssistantOpen || isAssistantMinimized}
+        assistantOpen={isAssistantOpen}
+        onTabChange={setActiveTab}
+        onAssistantToggle={handleAssistantToggle}
+      />
 
       {showCategoryModal && (
         <CategoryFilterModal
@@ -951,6 +1016,31 @@ export default function App() {
           onCancel={() => setActionModal(null)}
         />
       )}
+      <GeminiAssistant
+        open={isAssistantOpen}
+        minimized={isAssistantMinimized}
+        inventory={inventory}
+        categories={dbCategories}
+        activeTab={activeTab}
+        searchTerm={searchTerm}
+        selectedCategory={selectedCategory}
+        stockFilter={stockFilter}
+        sortBy={sortBy}
+        isOnline={isOnline}
+        pendingCount={pendingCount}
+        onOpenChange={setIsAssistantOpen}
+        onMinimizedChange={setIsAssistantMinimized}
+        onSetActiveTab={setActiveTab}
+        onSetSearchTerm={setSearchTerm}
+        onSetSelectedCategory={setSelectedCategory}
+        onSetStockFilter={setStockFilter}
+        onSetSortBy={setSortBy}
+        onAdjustStock={handleUpdateQuantity}
+        onSetQuantity={handleSetExactQuantity}
+        onRemoveItem={handleRemoveItemConfirmed}
+        onExport={handleExport}
+        showToast={showToast}
+      />
       <Toast message={toastMessage?.text || null} visible={!!toastMessage} />
     </div>
   );
