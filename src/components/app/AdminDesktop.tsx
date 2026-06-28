@@ -38,9 +38,9 @@ export function AdminDesktopLayout({
 }) {
   return (
     <div className="flex min-h-screen w-full">
-      <aside className="hidden lg:flex lg:w-64 xl:w-72 lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:border-r lg:border-slate-200/70 lg:bg-white">
+      <aside className="hidden lg:flex lg:w-64 xl:w-72 lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:border-r lg:border-slate-200/80 lg:bg-white">
         <div className="flex h-full flex-col">
-          <div className="px-4 pt-5 pb-2">
+          <div className="px-4 pt-5 pb-3">
             <div className="flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/25">
                 <span className="text-sm font-black">NS</span>
@@ -53,6 +53,7 @@ export function AdminDesktopLayout({
               </div>
             </div>
           </div>
+          <div className="mx-4 h-px bg-slate-200/80" aria-hidden="true" />
           <SidebarNav activeTab={activeTab} onTabChange={onTabChange} />
         </div>
       </aside>

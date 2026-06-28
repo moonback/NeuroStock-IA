@@ -17,14 +17,14 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
           <button
             key={tab}
             onClick={() => onTabChange(tab)}
-            className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 transition active:scale-[0.97] ${
+            className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-150 ${
               isActive
-                ? `${activeClass} ${activeBgClass}`
-                : "text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+                ? `${activeClass} ${activeBgClass} shadow-sm`
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            <Icon className={`h-5 w-5 ${isActive ? "" : "text-stone-500"}`} />
-            <span className="text-sm font-semibold">{label}</span>
+            <Icon className={`h-5 w-5 ${isActive ? "" : "text-slate-500"}`} />
+            <span className="text-sm font-semibold tracking-tight">{label}</span>
           </button>
         );
       })}
