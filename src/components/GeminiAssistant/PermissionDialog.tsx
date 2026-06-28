@@ -54,11 +54,11 @@ export function PermissionDialog({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl shadow-stone-900/25 overflow-hidden"
+            className="w-full max-w-sm bg-white rounded-2xl shadow-sm overflow-hidden"
           >
             <div className="p-6 space-y-4">
               <div className="flex items-start gap-3">
-                <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-600">
+                <div className="flex h-10 w-10 flex-shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-500">
                   <AlertTriangle className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ export function PermissionDialog({
                 <div 
                   className={`grid h-6 w-6 flex-shrink-0 place-items-center rounded-lg border-2 transition ${
                     autoAccept 
-                      ? 'bg-indigo-600 border-indigo-600 text-white' 
+                      ? 'bg-slate-900 border-slate-900 text-white' 
                       : 'border-stone-300 hover:border-stone-400'
                   }`}
                   onClick={(e) => { e.stopPropagation(); setAutoAccept(!autoAccept); }}
@@ -119,7 +119,7 @@ export function PermissionDialog({
                 </button>
                 <button
                   onClick={onConfirm}
-                  className="flex-1 py-3 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] rounded-2xl shadow-lg shadow-rose-600/25 transition"
+                  className="flex-1 py-3 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 active:scale-[0.98] rounded-2xl shadow-sm transition"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <Check className="h-4 w-4" />

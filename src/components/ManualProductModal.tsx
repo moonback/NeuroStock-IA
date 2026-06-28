@@ -265,7 +265,7 @@ export function ManualProductModal({ barcode, categories, initialValues, onSave,
                     type="button"
                     onClick={() => fileInputPhotoRef.current?.click()}
                     disabled={isUploading}
-                    className="h-28 rounded-2xl border border-dashed border-stone-300 hover:border-indigo-400 bg-stone-50 hover:bg-stone-50/50 transition flex flex-col items-center justify-center gap-2 text-stone-400 hover:text-stone-600 disabled:opacity-50 cursor-pointer touch-target"
+                    className="h-28 rounded-2xl border border-dashed border-stone-300 hover:border-stone-300 bg-stone-50 hover:bg-stone-50/50 transition flex flex-col items-center justify-center gap-2 text-stone-400 hover:text-stone-600 disabled:opacity-50 cursor-pointer touch-target"
                   >
                     {isUploading ? (
                       <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
@@ -280,7 +280,7 @@ export function ManualProductModal({ barcode, categories, initialValues, onSave,
                     type="button"
                     onClick={() => fileInputGalleryRef.current?.click()}
                     disabled={isUploading}
-                    className="h-28 rounded-2xl border border-dashed border-stone-300 hover:border-indigo-400 bg-stone-50 hover:bg-stone-50/50 transition flex flex-col items-center justify-center gap-2 text-stone-400 hover:text-stone-600 disabled:opacity-50 cursor-pointer touch-target"
+                    className="h-28 rounded-2xl border border-dashed border-stone-300 hover:border-stone-300 bg-stone-50 hover:bg-stone-50/50 transition flex flex-col items-center justify-center gap-2 text-stone-400 hover:text-stone-600 disabled:opacity-50 cursor-pointer touch-target"
                   >
                     {isUploading ? (
                       <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
