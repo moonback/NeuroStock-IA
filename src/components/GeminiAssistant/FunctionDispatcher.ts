@@ -22,7 +22,7 @@ export class FunctionDispatcher {
 
     if (isSensitiveTool(call.name)) {
       console.info(LOG_PREFIX, 'Permission utilisateur requise', { name: call.name });
-      const allowed = await this.askPermission({ name: call.name, args: call.args, description: getToolDescription(call.name) });
+      const allowed = await this.askPermission({ toolName: call.name, args: call.args, description: getToolDescription(call.name) });
       console.info(LOG_PREFIX, 'Décision permission utilisateur', { name: call.name, allowed });
       if (!allowed) return { id: call.id, name: call.name, response: { success: false, denied: true, error: 'Action refusée par l’utilisateur' } };
     }
@@ -40,15 +40,6 @@ export class FunctionDispatcher {
         console.error(LOG_PREFIX, 'Handler application en erreur', { name: tool.name, error: err });
         return this.error(call, err instanceof Error ? err.message : 'Erreur tool');
       }
-    }
-
-    if (tool.name === 'searchProduct') {
-      const query = String(call.args.query ?? '').toLowerCase();
-      const data = (context.inventory ?? []).filter((item) =>
-        item.name.toLowerCase().includes(query) || item.barcode.includes(query) || item.brand?.toLowerCase().includes(query),
-      );
-      console.info(LOG_PREFIX, 'Recherche produit locale terminée', { query, count: data.length });
-      return { id: call.id, name: call.name, response: { success: true, data } };
     }
 
     return this.error(call, `Aucun handler fourni pour ${call.name}. L’application doit exécuter cette action.`);
