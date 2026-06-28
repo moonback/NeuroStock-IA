@@ -34,6 +34,7 @@ import { CategoryFilterModal } from "./components/app/CategoryFilterModal";
 import { ScanTab } from "./components/app/ScanTab";
 import { StockTab } from "./components/app/StockTab";
 import { SyncNotice } from "./components/app/SyncNotice";
+import { GeminiAssistantProvider, AssistantContext } from "./components/GeminiAssistant";
 
 
 type ActionModalState =
@@ -774,7 +775,32 @@ export default function App() {
     return <AuthScreen onAuthSuccess={(activeSession) => setSession(activeSession)} />;
   }
 
+  const assistantContext: AssistantContext = {
+    inventory: {
+      items: inventory.map((item) => ({
+        barcode: item.barcode,
+        name: item.name,
+        quantity: item.quantity,
+        category: item.category,
+        brand: item.brand,
+      })),
+      categories: dbCategories,
+      totalItems,
+      lowStockCount,
+      offlineMode: !isOnline,
+      pendingSync: pendingCount,
+    },
+    userEmail: session.email,
+    storeName: "Superette Salengro",
+    isOnline,
+  };
+
   return (
+    <GeminiAssistantProvider
+      context={assistantContext}
+      onExportCSV={handleExport}
+      onRefresh={loadInventoryOnly}
+    >
     <div className="app-shell text-stone-800 font-sans">
       <Header
         email={session.email}
@@ -953,5 +979,6 @@ export default function App() {
       )}
       <Toast message={toastMessage?.text || null} visible={!!toastMessage} />
     </div>
+    </GeminiAssistantProvider>
   );
 }

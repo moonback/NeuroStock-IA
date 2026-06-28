@@ -1,0 +1,12 @@
+export { GeminiAssistant } from './GeminiAssistant';
+export { GeminiAssistantProvider } from './GeminiAssistantProvider';
+export { GeminiDrawer } from './GeminiDrawer';
+export { FloatingBubble } from './FloatingBubble';
+export { PermissionDialog } from './PermissionDialog';
+export { LiveSession } from './LiveSession';
+export { AudioManager } from './AudioManager';
+export { FunctionDispatcher } from './FunctionDispatcher';
+export { buildSystemPrompt } from './systemPrompt';
+export { TOOLS, isDestructiveTool, getToolsDeclaration } from './tools';
+export * from './types';
+export { GeminiAssistantContext } from './GeminiAssistantContext';
