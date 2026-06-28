@@ -126,24 +126,58 @@ export class LiveSession {
       this.audio.stopPlayback();
       return;
     }
-    const parts = message?.serverContent?.modelTurn?.parts ?? message?.modelTurn?.parts ?? [];
-    if (message?.setupComplete) console.info(LOG_PREFIX, 'Setup Gemini Live terminé');
-    if (!parts.length && !message?.setupComplete) console.info(LOG_PREFIX, 'Message Gemini sans parts exploitables', Object.keys(message ?? {}));
+    const serverContent = message?.serverContent;
+    const modelTurn = serverContent?.modelTurn ?? message?.modelTurn;
+    const parts = modelTurn?.parts ?? [];
 
+    if (message?.setupComplete) {
+      console.info(LOG_PREFIX, 'Setup Gemini Live terminé');
+      return;
+    }
+
+    if (serverContent?.turnComplete) {
+      console.info(LOG_PREFIX, 'Tour terminé');
+      return;
+    }
+
+    if (message?.toolCall) {
+      await this.handleFunctionCall(message.toolCall);
+      return;
+    }
+
+    if (!parts.length) {
+      console.debug(LOG_PREFIX, 'Message sans contenu utile', message);
+      return;
+    }
 
     for (const part of parts) {
+      if (part.text) {
+        console.info(LOG_PREFIX, 'Texte reçu', part.text);
+      }
+
       if (part.inlineData?.data) {
         console.info(LOG_PREFIX, 'Audio reçu de Gemini', { mimeType: part.inlineData.mimeType, chars: part.inlineData.data.length });
         this.callbacks.onAudio?.();
         await this.audio.playBase64Pcm(part.inlineData.data);
       }
-      if (part.functionCall && this.callbacks.onFunctionCall) {
-        console.info(LOG_PREFIX, 'Function call reçu', { id: part.functionCall.id, name: part.functionCall.name, args: part.functionCall.args });
-        this.callbacks.onThinking?.();
-        const result = await this.callbacks.onFunctionCall({ id: part.functionCall.id ?? crypto.randomUUID(), name: part.functionCall.name, args: part.functionCall.args ?? {} });
-        await this.sendToolResult(result);
+
+      if (part.functionCall) {
+        await this.handleFunctionCall(part.functionCall);
       }
     }
+  }
+
+  private async handleFunctionCall(functionCall: any): Promise<void> {
+    if (!this.callbacks.onFunctionCall) return;
+
+    console.info(LOG_PREFIX, 'Function call reçu', { id: functionCall.id, name: functionCall.name, args: functionCall.args });
+    this.callbacks.onThinking?.();
+    const result = await this.callbacks.onFunctionCall({
+      id: functionCall.id ?? crypto.randomUUID(),
+      name: functionCall.name,
+      args: functionCall.args ?? {},
+    });
+    await this.sendToolResult(result);
   }
 
   private async handleClose(context: AssistantExternalContext): Promise<void> {
