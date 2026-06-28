@@ -108,6 +108,24 @@ export class LiveSession {
     this.session?.sendToolResponse?.({ functionResponses: [{ id: result.id, name: result.name, response: result.response }] });
   }
 
+  private async handleFunctionCall(call: { id?: string; name?: string; args?: Record<string, unknown> }): Promise<void> {
+    if (!call.name) {
+      console.warn(LOG_PREFIX, 'Function call Gemini ignoré: nom absent', call);
+      return;
+    }
+
+    if (!this.callbacks.onFunctionCall) {
+      console.warn(LOG_PREFIX, 'Function call Gemini ignoré: aucun dispatcher configuré', { id: call.id, name: call.name, args: call.args });
+      return;
+    }
+
+    const id = call.id ?? crypto.randomUUID();
+    console.info(LOG_PREFIX, 'Function call reçu', { id, name: call.name, args: call.args });
+    this.callbacks.onThinking?.();
+    const result = await this.callbacks.onFunctionCall({ id, name: call.name, args: call.args ?? {} });
+    await this.sendToolResult(result);
+  }
+
   async disconnect(): Promise<void> {
     console.info(LOG_PREFIX, 'Déconnexion demandée', { sentAudioChunks: this.sentAudioChunks });
     this.closedByUser = true;
@@ -127,9 +145,22 @@ export class LiveSession {
       return;
     }
     const parts = message?.serverContent?.modelTurn?.parts ?? message?.modelTurn?.parts ?? [];
-    if (message?.setupComplete) console.info(LOG_PREFIX, 'Setup Gemini Live terminé');
-    if (!parts.length && !message?.setupComplete) console.info(LOG_PREFIX, 'Message Gemini sans parts exploitables', Object.keys(message ?? {}));
+    const functionCalls = [
+      ...(message?.toolCall?.functionCalls ?? []),
+      ...(message?.toolCall?.functionCall ? [message.toolCall.functionCall] : []),
+      ...(message?.functionCalls ?? []),
+    ];
 
+    if (message?.setupComplete) console.info(LOG_PREFIX, 'Setup Gemini Live terminé');
+    if (message?.serverContent?.inputTranscription?.text) console.info(LOG_PREFIX, 'Transcription utilisateur Gemini', message.serverContent.inputTranscription.text);
+    if (message?.serverContent?.outputTranscription?.text) console.info(LOG_PREFIX, 'Transcription réponse Gemini', message.serverContent.outputTranscription.text);
+    if (message?.serverContent?.turnComplete) console.info(LOG_PREFIX, 'Tour Gemini terminé');
+    if (message?.toolCallCancellation?.ids?.length) console.warn(LOG_PREFIX, 'Tool calls annulés par Gemini', message.toolCallCancellation.ids);
+    if (!parts.length && !functionCalls.length && !message?.setupComplete) console.info(LOG_PREFIX, 'Message Gemini sans parts exploitables', Object.keys(message ?? {}));
+
+    for (const call of functionCalls) {
+      await this.handleFunctionCall(call);
+    }
 
     for (const part of parts) {
       if (part.inlineData?.data) {
@@ -137,11 +168,11 @@ export class LiveSession {
         this.callbacks.onAudio?.();
         await this.audio.playBase64Pcm(part.inlineData.data);
       }
-      if (part.functionCall && this.callbacks.onFunctionCall) {
-        console.info(LOG_PREFIX, 'Function call reçu', { id: part.functionCall.id, name: part.functionCall.name, args: part.functionCall.args });
-        this.callbacks.onThinking?.();
-        const result = await this.callbacks.onFunctionCall({ id: part.functionCall.id ?? crypto.randomUUID(), name: part.functionCall.name, args: part.functionCall.args ?? {} });
-        await this.sendToolResult(result);
+      if (part.text) {
+        console.info(LOG_PREFIX, 'Texte reçu de Gemini', part.text);
+      }
+      if (part.functionCall) {
+        await this.handleFunctionCall(part.functionCall);
       }
     }
   }
