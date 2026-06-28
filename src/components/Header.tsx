@@ -46,7 +46,7 @@ export function Header({
 
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-extrabold tracking-tight text-stone-950">
-              Superette Salengro
+              Stocks
             </h1>
             {/* Compact stats */}
             <div className="mt-1 flex items-center gap-3 text-[11px] font-semibold text-stone-500">
