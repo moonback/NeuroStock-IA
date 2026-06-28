@@ -36,6 +36,7 @@ import { ScanTab } from "./components/app/ScanTab";
 import { StockTab } from "./components/app/StockTab";
 import { SyncNotice } from "./components/app/SyncNotice";
 import { GeminiAssistantProvider } from "./providers/GeminiAssistantProvider";
+import { generateProductEmbedding, fullSemanticSearch } from "./lib/embeddingService";
 
 
 type ActionModalState =
@@ -140,6 +141,7 @@ export default function App() {
   const [stockScanMode, setStockScanMode] = useState<StockScanMode>("add");
   const [scannerInputMode, setScannerInputMode] = useState<ScannerInputMode>("hardware");
   const [isCompactView, setIsCompactView] = useState(false);
+  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
 
   const showToast = useCallback((text: string) => {
     const id = Date.now();
@@ -148,6 +150,66 @@ export default function App() {
       setToastMessage((prev) => (prev?.id === id ? null : prev));
     }, 3000);
   }, []);
+
+  const handleRegenerateEmbeddings = useCallback(async () => {
+    if (isGeneratingEmbeddings) return;
+    
+    setIsGeneratingEmbeddings(true);
+    
+    try {
+      showToast("Génération des embeddings en cours...");
+      
+      // Identifier les produits sans embedding
+      const productsWithoutEmbeddings = inventory.filter(item => !item.embedding);
+      const totalToProcess = productsWithoutEmbeddings.length;
+      
+      if (totalToProcess === 0) {
+        showToast("Tous les produits sont déjà vectorisés !");
+        setIsGeneratingEmbeddings(false);
+        return;
+      }
+      
+      let processed = 0;
+      let failed = 0;
+      
+      // Traiter chaque produit
+      for (const product of productsWithoutEmbeddings) {
+        try {
+          const embedding = await generateProductEmbedding(product);
+          const updatedProduct = { ...product, embedding, lastUpdated: Date.now() };
+          await syncItem(updatedProduct);
+          
+          // Mettre à jour l'état local progressivement
+          setInventory(prev => prev.map(item => 
+            item.barcode === product.barcode ? updatedProduct : item
+          ));
+          
+          processed++;
+          
+          // Mettre à jour le toast avec la progression toutes les 5 produits
+          if (processed % 5 === 0 || processed === totalToProcess) {
+            showToast(`Embeddings : ${processed}/${totalToProcess}...`);
+          }
+        } catch (error) {
+          console.error(`Échec pour ${product.name}:`, error);
+          failed++;
+        }
+      }
+      
+      // Message final
+      const success = totalToProcess - failed;
+      if (failed === 0) {
+        showToast(`Vectorisation terminée ! ${success} produits traités.`);
+      } else {
+        showToast(`${success} produits traités, ${failed} échec(s).`);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la génération des embeddings:", error);
+      showToast("Erreur lors de la génération des embeddings.");
+    } finally {
+      setIsGeneratingEmbeddings(false);
+    }
+  }, [inventory, isGeneratingEmbeddings, showToast]);
 
   const handleOfflineFlushComplete = useCallback(
     async (result: { synced: number; failed: number; remaining: number }) => {
@@ -1010,6 +1072,14 @@ export default function App() {
           if (purchasePrice !== undefined) updatedItem.purchasePrice = purchasePrice;
           if (salesPrice !== undefined) updatedItem.salesPrice = salesPrice;
           
+          // Générer un nouvel embedding si les champs clés ont changé
+          try {
+            const embedding = await generateProductEmbedding(updatedItem);
+            updatedItem.embedding = embedding;
+          } catch (error) {
+            console.error('Failed to generate embedding for update:', error);
+          }
+          
           await syncItem(updatedItem);
           return { barcode: item.barcode, name: item.name, updated: true };
         },
@@ -1149,6 +1219,14 @@ export default function App() {
             lastMovement: quantity,
             lastUpdated: Date.now(),
           };
+          
+          // Générer un embedding pour le nouveau produit
+          try {
+            const embedding = await generateProductEmbedding(item);
+            item.embedding = embedding;
+          } catch (error) {
+            console.error('Failed to generate embedding for new product:', error);
+          }
 
           const queued = await syncItem(item);
           showToast(queued ? `Produit cree en attente de synchro: ${resolvedName}` : `Produit cree: ${resolvedName}`);
@@ -1185,6 +1263,65 @@ export default function App() {
           handleExport();
           return { exported: true };
         },
+        semanticSearchProduct: async (args) => {
+          const query = String(args.query || '');
+          const limit = Number(args.limit) || 5;
+          const results = await fullSemanticSearch(query, inventory, limit);
+          return {
+            success: true,
+            query,
+            results: results.map(({ product, similarity }) => ({
+              barcode: product.barcode,
+              name: product.name,
+              brand: product.brand,
+              category: product.category,
+              quantity: product.quantity,
+              similarity,
+            })),
+          };
+        },
+        regenerateEmbeddings: async (args) => {
+          const barcode = args.barcode ? String(args.barcode) : undefined;
+          const productsToProcess = barcode
+            ? inventory.filter((p) => p.barcode === barcode)
+            : inventory;
+          
+          const wasAlreadyGenerating = isGeneratingEmbeddings;
+          if (!wasAlreadyGenerating) {
+            setIsGeneratingEmbeddings(true);
+          }
+          
+          const results = [];
+          
+          for (const product of productsToProcess) {
+            try {
+              const embedding = await generateProductEmbedding(product);
+              const updatedProduct = { ...product, embedding, lastUpdated: Date.now() };
+              await syncItem(updatedProduct);
+              
+              // Mettre à jour l'état local
+              setInventory(prev => prev.map(item => 
+                item.barcode === product.barcode ? updatedProduct : item
+              ));
+              
+              results.push({ barcode: product.barcode, name: product.name, success: true });
+            } catch (error) {
+              console.error(`Failed to generate embedding for ${product.name}:`, error);
+              results.push({ barcode: product.barcode, name: product.name, success: false, error: String(error) });
+            }
+          }
+          
+          if (!wasAlreadyGenerating) {
+            setIsGeneratingEmbeddings(false);
+          }
+          
+          return {
+            processed: productsToProcess.length,
+            success: results.filter((r) => r.success).length,
+            failed: results.filter((r) => !r.success).length,
+            results,
+          };
+        },
       }}
     >
     <div className="app-shell text-stone-800 font-sans">
@@ -1200,6 +1337,9 @@ export default function App() {
         onExport={() => setShowExportModal(true)}
         onLogout={handleLogout}
         onSyncNow={() => void flushQueue()}
+        onRegenerateEmbeddings={handleRegenerateEmbeddings}
+        isGeneratingEmbeddings={isGeneratingEmbeddings}
+        embeddedCount={inventory.filter(item => !!item.embedding).length}
       />
 
       <main className="app-main space-y-3 sm:space-y-4">

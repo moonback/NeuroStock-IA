@@ -16,6 +16,7 @@ export interface SupabaseInventoryRow {
   purchase_price: number | null;
   sales_price: number | null;
   last_movement: number | null;
+  embedding: number[] | null;
 }
 
 function getRestUrl(path = '') {
@@ -34,6 +35,7 @@ function toRow(item: InventoryItem): SupabaseInventoryRow {
     purchase_price: item.purchasePrice ?? null,
     sales_price: item.salesPrice ?? null,
     last_movement: item.lastMovement ?? null,
+    embedding: item.embedding ?? null,
   };
 }
 
@@ -49,6 +51,7 @@ export function toInventoryItem(row: SupabaseInventoryRow): InventoryItem {
     purchasePrice: row.purchase_price ?? undefined,
     salesPrice: row.sales_price ?? undefined,
     lastMovement: row.last_movement ?? undefined,
+    embedding: row.embedding ?? undefined,
   };
 }
 

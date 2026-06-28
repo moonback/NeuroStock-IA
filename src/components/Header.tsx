@@ -1,4 +1,4 @@
-import { Store, Download, LogOut, CloudOff, CloudUpload, RefreshCw, Check } from "lucide-react";
+import { Store, Download, LogOut, CloudOff, CloudUpload, RefreshCw, Check, Brain } from "lucide-react";
 
 interface HeaderProps {
   email: string;
@@ -12,6 +12,9 @@ interface HeaderProps {
   onExport: () => void;
   onLogout: () => void;
   onSyncNow?: () => void;
+  onRegenerateEmbeddings?: () => void;
+  isGeneratingEmbeddings?: boolean;
+  embeddedCount?: number;
 }
 
 export function Header({
@@ -26,6 +29,9 @@ export function Header({
   onExport,
   onLogout,
   onSyncNow,
+  onRegenerateEmbeddings,
+  isGeneratingEmbeddings,
+  embeddedCount,
 }: HeaderProps) {
   const canSync = isOnline && pendingCount > 0 && !!onSyncNow;
 
@@ -78,6 +84,30 @@ export function Header({
                   <RefreshCw className="h-4 w-4 animate-spin" />
                 ) : (
                   <CloudUpload className="h-4 w-4" />
+                )}
+              </button>
+            )}
+            {showExport && onRegenerateEmbeddings && (
+              <button
+                onClick={onRegenerateEmbeddings}
+                disabled={isGeneratingEmbeddings}
+                aria-label={
+                  isGeneratingEmbeddings 
+                    ? "Génération des embeddings en cours" 
+                    : embeddedCount === inventoryLength 
+                      ? "Tous les produits sont vectorisés" 
+                      : `Générer les embeddings (${embeddedCount || 0}/${inventoryLength})`
+                }
+                className={`touch-target grid h-10 w-10 place-items-center rounded-2xl border transition tap-active disabled:opacity-50 ${
+                  embeddedCount === inventoryLength
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-600"
+                    : "border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                }`}
+              >
+                {isGeneratingEmbeddings ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Brain className="h-4 w-4" />
                 )}
               </button>
             )}

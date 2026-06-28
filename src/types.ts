@@ -23,6 +23,7 @@ export interface InventoryItem extends ProductLookupData {
   purchasePrice?: number;
   salesPrice?: number;
   lastMovement?: number;
+  embedding?: number[];
 }
 
 export interface CategoryItem {
