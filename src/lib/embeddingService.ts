@@ -11,14 +11,14 @@ const EMBEDDING_DIMENSIONS = parseInt(import.meta.env.VITE_OPENROUTER_EMBED_DIME
 function generateFallbackEmbedding(text: string): number[] {
   const embedding = new Array(EMBEDDING_DIMENSIONS).fill(0);
   let hash = 0;
-  
+
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32-bit integer
     embedding[i % EMBEDDING_DIMENSIONS] = Math.sin(hash) * 0.5 + 0.5;
   }
-  
+
   return embedding;
 }
 
@@ -49,7 +49,7 @@ export async function generateProductEmbedding(product: Pick<InventoryItem, 'nam
           'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'Superette Salengro',
+          'X-Title': 'NeuroStock',
         },
         body: JSON.stringify({
           model: EMBEDDING_MODEL,
@@ -70,7 +70,7 @@ export async function generateProductEmbedding(product: Pick<InventoryItem, 'nam
     if (data.data && data.data[0] && data.data[0].embedding) {
       return data.data[0].embedding;
     }
-    
+
     console.warn('Invalid response from OpenRouter embedding API, using fallback');
     return generateFallbackEmbedding(productText);
   } catch (error) {
@@ -115,19 +115,19 @@ export async function fullSemanticSearch(
   limit = 5
 ): Promise<{ product: InventoryItem; similarity: number }[]> {
   const productsWithEmbeddings = products.filter((p) => p.embedding && p.embedding.length > 0);
-  
+
   if (productsWithEmbeddings.length === 0) {
     console.warn('No products with embeddings available');
     return [];
   }
 
   // Générer l'embedding de la requête
-  const queryEmbedding = await generateProductEmbedding({ 
-    name: query, 
-    brand: '', 
-    category: '', 
-    purchasePrice: undefined, 
-    salesPrice: undefined 
+  const queryEmbedding = await generateProductEmbedding({
+    name: query,
+    brand: '',
+    category: '',
+    purchasePrice: undefined,
+    salesPrice: undefined
   });
 
   // Calculer la similarité pour chaque produit

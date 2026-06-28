@@ -1,6 +1,6 @@
-# 📦 Boutique · Inventaire PWA
+# 📦 NeuroStock · Inventaire PWA
 
-Application PWA mobile-first de gestion d'inventaire pour boutique, pensée pour le scan rapide, la synchronisation temps réel avec Supabase et, désormais, le pilotage vocal via un assistant Gemini.
+Application PWA de gestion d'inventaire pour boutique, pensée pour le scan rapide, la synchronisation temps réel avec Supabase et, désormais, le pilotage vocal via un assistant.
 
 ---
 

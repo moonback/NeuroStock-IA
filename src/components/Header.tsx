@@ -46,7 +46,7 @@ export function Header({
 
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-extrabold tracking-tight text-stone-950">
-              Stocks
+              NeuroStocks
             </h1>
             {/* Compact stats */}
             <div className="mt-1 flex items-center gap-3 text-[11px] font-semibold text-stone-500">
@@ -85,15 +85,14 @@ export function Header({
                   disabled={!canStart && !isRunning}
                   aria-label={
                     isRunning ? (isPaused ? "Reprendre la génération" : "Mettre en pause")
-                      : embeddedCount === inventoryLength 
-                        ? "Tous les produits sont vectorisés" 
+                      : embeddedCount === inventoryLength
+                        ? "Tous les produits sont vectorisés"
                         : `Générer les embeddings (${embeddedCount}/${inventoryLength})`
                   }
-                  className={`touch-target grid h-10 w-10 place-items-center rounded-2xl border transition tap-active disabled:opacity-50 ${
-                    embeddedCount === inventoryLength && !isRunning
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-600"
-                      : "border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                  }`}
+                  className={`touch-target grid h-10 w-10 place-items-center rounded-2xl border transition tap-active disabled:opacity-50 ${embeddedCount === inventoryLength && !isRunning
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-600"
+                    : "border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                    }`}
                 >
                   {isRunning ? (
                     isPaused ? (
@@ -142,11 +141,10 @@ export function Header({
             onClick={canSync ? onSyncNow : undefined}
             disabled={!canSync}
             aria-label={`Statut réseau : ${!isOnline ? "Hors-ligne" : `${pendingCount} en attente`}${canSync ? ", touchez pour synchroniser" : ""}`}
-            className={`mt-2.5 flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition ${
-              !isOnline 
-                ? "text-rose-600 bg-rose-50 border-rose-200" 
-                : "text-amber-600 bg-amber-50 border-amber-200"
-            } ${canSync ? "tap-active cursor-pointer" : "cursor-default"}`}
+            className={`mt-2.5 flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition ${!isOnline
+              ? "text-rose-600 bg-rose-50 border-rose-200"
+              : "text-amber-600 bg-amber-50 border-amber-200"
+              } ${canSync ? "tap-active cursor-pointer" : "cursor-default"}`}
           >
             {!isOnline ? (
               <CloudOff className="h-3.5 w-3.5 flex-shrink-0" />

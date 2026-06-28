@@ -1,5 +1,5 @@
 
-# Roadmap Assistant Vocal - Superette Salengro
+# Roadmap Assistant Vocal - NeuroStock
 
 ## Context
 - **Actuel**: Assistant vocal Gemini Live avec 8 outils métier (recherche, modification, création, suppression, export)

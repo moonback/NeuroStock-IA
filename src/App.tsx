@@ -42,11 +42,11 @@ import { generateProductEmbedding, fullSemanticSearch } from "./lib/embeddingSer
 
 type ActionModalState =
   | {
-      type: "quantity";
-      product: InventoryItem | ({ barcode: string } & ProductLookupData);
-      existingQty: number;
-      isNew: boolean;
-    }
+    type: "quantity";
+    product: InventoryItem | ({ barcode: string } & ProductLookupData);
+    existingQty: number;
+    isNew: boolean;
+  }
   | { type: "manual"; barcode: string }
   | { type: "edit"; product: InventoryItem }
   | { type: "scan_choice"; product: InventoryItem }
@@ -855,7 +855,7 @@ export default function App() {
     })),
     categories: dbCategories,
     user: { email: session.email },
-    storeName: "Superette Salengro",
+    storeName: "NeuroStock",
     language: "français",
     offlineMode: !isOnline,
     businessRules: [
@@ -965,7 +965,7 @@ export default function App() {
         updateStock: async (args) => {
           const quantity = Number(args.quantity);
           const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
-          
+
           if (ambiguousMatches.length > 0) {
             return {
               updated: false,
@@ -977,15 +977,15 @@ export default function App() {
               })),
             };
           }
-          
+
           if (!item || !Number.isFinite(quantity)) throw new Error("Produit ou quantité invalide");
-          
+
           await syncItem({ ...item, quantity: Math.max(0, quantity), lastUpdated: Date.now(), lastMovement: quantity - item.quantity });
           return { barcode: item.barcode, name: item.name, quantity, updated: true };
         },
         updateProduct: async (args) => {
           const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
-          
+
           if (ambiguousMatches.length > 0) {
             return {
               updated: false,
@@ -997,25 +997,25 @@ export default function App() {
               })),
             };
           }
-          
+
           if (!item) throw new Error("Produit non trouvé");
-          
+
           const updatedItem = { ...item, lastUpdated: Date.now() };
-          
+
           const name = normalizeOptionalText(args.name);
           const brand = normalizeOptionalText(args.brand);
           const category = normalizeOptionalText(args.category);
           const imageUrl = normalizeOptionalText(args.imageUrl);
           const purchasePrice = Number.isFinite(Number(args.purchasePrice)) ? Math.max(0, Number(args.purchasePrice)) : undefined;
           const salesPrice = Number.isFinite(Number(args.salesPrice)) ? Math.max(0, Number(args.salesPrice)) : undefined;
-          
+
           if (name !== undefined) updatedItem.name = name;
           if (brand !== undefined) updatedItem.brand = brand;
           if (category !== undefined) updatedItem.category = category;
           if (imageUrl !== undefined) updatedItem.imageUrl = imageUrl;
           if (purchasePrice !== undefined) updatedItem.purchasePrice = purchasePrice;
           if (salesPrice !== undefined) updatedItem.salesPrice = salesPrice;
-          
+
           // Générer un nouvel embedding si les champs clés ont changé
           try {
             const embedding = await generateProductEmbedding(updatedItem);
@@ -1023,7 +1023,7 @@ export default function App() {
           } catch (error) {
             console.error('Failed to generate embedding for update:', error);
           }
-          
+
           await syncItem(updatedItem);
           return { barcode: item.barcode, name: item.name, updated: true };
         },
@@ -1163,7 +1163,7 @@ export default function App() {
             lastMovement: quantity,
             lastUpdated: Date.now(),
           };
-          
+
           // Générer un embedding pour le nouveau produit
           try {
             const embedding = await generateProductEmbedding(item);
@@ -1229,36 +1229,36 @@ export default function App() {
           const productsToProcess = barcode
             ? inventory.filter((p) => p.barcode === barcode)
             : inventory;
-          
+
           const wasAlreadyGenerating = isGeneratingEmbeddings;
           if (!wasAlreadyGenerating) {
             setIsGeneratingEmbeddings(true);
           }
-          
+
           const results = [];
-          
+
           for (const product of productsToProcess) {
             try {
               const embedding = await generateProductEmbedding(product);
               const updatedProduct = { ...product, embedding, lastUpdated: Date.now() };
               await syncItem(updatedProduct);
-              
+
               // Mettre à jour l'état local
-              setInventory(prev => prev.map(item => 
+              setInventory(prev => prev.map(item =>
                 item.barcode === product.barcode ? updatedProduct : item
               ));
-              
+
               results.push({ barcode: product.barcode, name: product.name, success: true });
             } catch (error) {
               console.error(`Failed to generate embedding for ${product.name}:`, error);
               results.push({ barcode: product.barcode, name: product.name, success: false, error: String(error) });
             }
           }
-          
+
           if (!wasAlreadyGenerating) {
             setIsGeneratingEmbeddings(false);
           }
-          
+
           return {
             processed: productsToProcess.length,
             success: results.filter((r) => r.success).length,
@@ -1268,205 +1268,205 @@ export default function App() {
         },
       }}
     >
-    <div className="app-shell text-stone-800 font-sans">
-      <Header
-        email={session.email}
-        inventoryLength={inventory.length}
-        totalItems={totalItems}
-        lowStockCount={lowStockCount}
-        showExport={inventory.length > 0}
-        isOnline={isOnline}
-        pendingCount={pendingCount}
-        isSyncing={isSyncing}
-        onExport={() => setShowExportModal(true)}
-        onLogout={handleLogout}
-        onSyncNow={() => void flushQueue()}
-        embeddingGenerator={embeddingGenerator}
-      />
-
-      <main className="app-main space-y-3 sm:space-y-4">
-
-        <SyncNotice
-          syncError={syncError}
-          inventorySource={inventorySource}
+      <div className="app-shell text-stone-800 font-sans">
+        <Header
+          email={session.email}
+          inventoryLength={inventory.length}
+          totalItems={totalItems}
+          lowStockCount={lowStockCount}
+          showExport={inventory.length > 0}
           isOnline={isOnline}
           pendingCount={pendingCount}
+          isSyncing={isSyncing}
+          onExport={() => setShowExportModal(true)}
+          onLogout={handleLogout}
+          onSyncNow={() => void flushQueue()}
+          embeddingGenerator={embeddingGenerator}
         />
 
-        {/* Content Tabs */}
-        {activeTab === "scan" ? (
-          <ScanTab
+        <main className="app-main space-y-3 sm:space-y-4">
+
+          <SyncNotice
+            syncError={syncError}
+            inventorySource={inventorySource}
             isOnline={isOnline}
             pendingCount={pendingCount}
-            syncError={syncError}
-            loadingBarcode={loadingBarcode}
-            actionModal={actionModal}
-            scannerInputMode={scannerInputMode}
-            recentlyScanned={recentlyScanned}
-            onScannerInputModeChange={setScannerInputMode}
-            onScan={handleScan}
-            onEditProduct={(item) => setActionModal({ type: "edit", product: item })}
-            onEditQuantity={(item) =>
-              setActionModal({
+          />
+
+          {/* Content Tabs */}
+          {activeTab === "scan" ? (
+            <ScanTab
+              isOnline={isOnline}
+              pendingCount={pendingCount}
+              syncError={syncError}
+              loadingBarcode={loadingBarcode}
+              actionModal={actionModal}
+              scannerInputMode={scannerInputMode}
+              recentlyScanned={recentlyScanned}
+              onScannerInputModeChange={setScannerInputMode}
+              onScan={handleScan}
+              onEditProduct={(item) => setActionModal({ type: "edit", product: item })}
+              onEditQuantity={(item) =>
+                setActionModal({
+                  type: "quantity",
+                  product: item,
+                  existingQty: item.quantity,
+                  isNew: false,
+                })
+              }
+              onUpdateQuantity={handleUpdateQuantity}
+            />
+          ) : activeTab === "autoScan" ? (
+            <AutomaticScanPanel
+              enabled={isBatchMode}
+              mode={stockScanMode}
+              loadingBarcode={loadingBarcode}
+              isOnline={isOnline}
+              pendingCount={pendingCount}
+              syncError={syncError}
+              onEnabledChange={setIsBatchMode}
+              onModeChange={setStockScanMode}
+              scannerInputMode={scannerInputMode}
+              onScannerInputModeChange={setScannerInputMode}
+              onScan={handleScan}
+            />
+          ) : activeTab === "stock" ? (
+            <StockTab
+              inventoryLength={inventory.length}
+              filteredInventory={filteredInventory}
+              categories={categories}
+              categoryOptions={categoryOptions}
+              dbCategories={dbCategories}
+              financialStats={financialStats}
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+              stockFilter={stockFilter}
+              sortBy={sortBy}
+              showFilters={showFilters}
+              hasActiveFilters={hasActiveFilters}
+              isInventoryLoading={isInventoryLoading}
+              onSearchTermChange={setSearchTerm}
+              onSelectedCategoryChange={setSelectedCategory}
+              onStockFilterChange={setStockFilter}
+              onSortByChange={setSortBy}
+              onShowFiltersChange={setShowFilters}
+              onShowCategoryModal={() => setShowCategoryModal(true)}
+              onResetFilters={resetFilters}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemove={handleRemoveItem}
+              onEditQuantity={(item) => setActionModal({
                 type: "quantity",
                 product: item,
                 existingQty: item.quantity,
                 isNew: false,
-              })
-            }
-            onUpdateQuantity={handleUpdateQuantity}
-          />
-        ) : activeTab === "autoScan" ? (
-          <AutomaticScanPanel
-            enabled={isBatchMode}
-            mode={stockScanMode}
-            loadingBarcode={loadingBarcode}
-            isOnline={isOnline}
-            pendingCount={pendingCount}
-            syncError={syncError}
-            onEnabledChange={setIsBatchMode}
-            onModeChange={setStockScanMode}
-            scannerInputMode={scannerInputMode}
-            onScannerInputModeChange={setScannerInputMode}
-            onScan={handleScan}
-          />
-        ) : activeTab === "stock" ? (
-          <StockTab
+              })}
+              onEditProduct={(item) => setActionModal({
+                type: "edit",
+                product: item,
+              })}
+              onOpenScan={() => setActiveTab("scan")}
+            />
+          ) : (
+            <CategoriesManager
+              categories={dbCategories}
+              inventory={inventory}
+              onRefreshCategories={loadCategories}
+              onRefreshInventory={loadInventoryOnly}
+              showToast={showToast}
+            />
+          )}
+        </main>
+
+        <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+
+        {showCategoryModal && (
+          <CategoryFilterModal
             inventoryLength={inventory.length}
-            filteredInventory={filteredInventory}
-            categories={categories}
-            categoryOptions={categoryOptions}
-            dbCategories={dbCategories}
-            financialStats={financialStats}
-            searchTerm={searchTerm}
             selectedCategory={selectedCategory}
-            stockFilter={stockFilter}
-            sortBy={sortBy}
-            showFilters={showFilters}
-            hasActiveFilters={hasActiveFilters}
-            isInventoryLoading={isInventoryLoading}
-            onSearchTermChange={setSearchTerm}
-            onSelectedCategoryChange={setSelectedCategory}
-            onStockFilterChange={setStockFilter}
-            onSortByChange={setSortBy}
-            onShowFiltersChange={setShowFilters}
-            onShowCategoryModal={() => setShowCategoryModal(true)}
-            onResetFilters={resetFilters}
-            onUpdateQuantity={handleUpdateQuantity}
-            onRemove={handleRemoveItem}
-            onEditQuantity={(item) => setActionModal({
-              type: "quantity",
-              product: item,
-              existingQty: item.quantity,
-              isNew: false,
-            })}
-            onEditProduct={(item) => setActionModal({
-              type: "edit",
-              product: item,
-            })}
-            onOpenScan={() => setActiveTab("scan")}
-          />
-        ) : (
-          <CategoriesManager
-            categories={dbCategories}
-            inventory={inventory}
-            onRefreshCategories={loadCategories}
-            onRefreshInventory={loadInventoryOnly}
-            showToast={showToast}
+            categoryOptions={categoryOptions}
+            onSelectCategory={setSelectedCategory}
+            onClose={() => setShowCategoryModal(false)}
           />
         )}
-      </main>
 
-      <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        {showExportModal && (
+          <ExportModal
+            items={inventory}
+            categories={dbCategories}
+            onClose={() => setShowExportModal(false)}
+          />
+        )}
 
-      {showCategoryModal && (
-        <CategoryFilterModal
-          inventoryLength={inventory.length}
-          selectedCategory={selectedCategory}
-          categoryOptions={categoryOptions}
-          onSelectCategory={setSelectedCategory}
-          onClose={() => setShowCategoryModal(false)}
-        />
-      )}
+        {/* Modals & toast */}
+        {actionModal?.type === "manual" && (
+          <ManualProductModal
+            barcode={actionModal.barcode}
+            categories={dbCategories}
+            onSave={handleManualProductSave}
+            onCancel={() => setActionModal(null)}
+          />
+        )}
+        {actionModal?.type === "scan_choice" && (
+          <ScanChoiceModal
+            product={actionModal.product}
+            onChooseStock={() =>
+              setActionModal({
+                type: "quantity",
+                product: actionModal.product,
+                existingQty: actionModal.product.quantity,
+                isNew: false,
+              })
+            }
+            onChooseEdit={() =>
+              setActionModal({
+                type: "edit",
+                product: actionModal.product,
+              })
+            }
+            onCancel={() => setActionModal(null)}
+          />
+        )}
+        {actionModal?.type === "edit" && (
+          <ManualProductModal
+            barcode={actionModal.product.barcode}
+            categories={dbCategories}
+            initialValues={actionModal.product}
+            onSave={handleProductUpdateSave}
+            onCancel={() => setActionModal(null)}
+          />
+        )}
+        {actionModal?.type === "product_details" && (
+          <ProductDetailsModal
+            product={actionModal.product}
+            onClose={() => setActionModal(null)}
+            onEditStock={() =>
+              setActionModal({
+                type: "quantity",
+                product: actionModal.product,
+                existingQty: actionModal.product.quantity,
+                isNew: false,
+              })
+            }
+            onEdit={() =>
+              setActionModal({
+                type: "edit",
+                product: actionModal.product,
+              })
+            }
+          />
+        )}
 
-      {showExportModal && (
-        <ExportModal
-          items={inventory}
-          categories={dbCategories}
-          onClose={() => setShowExportModal(false)}
-        />
-      )}
-
-      {/* Modals & toast */}
-      {actionModal?.type === "manual" && (
-        <ManualProductModal
-          barcode={actionModal.barcode}
-          categories={dbCategories}
-          onSave={handleManualProductSave}
-          onCancel={() => setActionModal(null)}
-        />
-      )}
-      {actionModal?.type === "scan_choice" && (
-        <ScanChoiceModal
-          product={actionModal.product}
-          onChooseStock={() =>
-            setActionModal({
-              type: "quantity",
-              product: actionModal.product,
-              existingQty: actionModal.product.quantity,
-              isNew: false,
-            })
-          }
-          onChooseEdit={() =>
-            setActionModal({
-              type: "edit",
-              product: actionModal.product,
-            })
-          }
-          onCancel={() => setActionModal(null)}
-        />
-      )}
-      {actionModal?.type === "edit" && (
-        <ManualProductModal
-          barcode={actionModal.product.barcode}
-          categories={dbCategories}
-          initialValues={actionModal.product}
-          onSave={handleProductUpdateSave}
-          onCancel={() => setActionModal(null)}
-        />
-      )}
-      {actionModal?.type === "product_details" && (
-        <ProductDetailsModal
-          product={actionModal.product}
-          onClose={() => setActionModal(null)}
-          onEditStock={() =>
-            setActionModal({
-              type: "quantity",
-              product: actionModal.product,
-              existingQty: actionModal.product.quantity,
-              isNew: false,
-            })
-          }
-          onEdit={() =>
-            setActionModal({
-              type: "edit",
-              product: actionModal.product,
-            })
-          }
-        />
-      )}
-
-      {actionModal?.type === "quantity" && (
-        <QuantityModal
-          product={actionModal.product}
-          existingQty={actionModal.existingQty}
-          isNew={actionModal.isNew}
-          onSave={handleQuantitySave}
-          onCancel={() => setActionModal(null)}
-        />
-      )}
-      <Toast message={toastMessage?.text || null} visible={!!toastMessage} />
-    </div>
+        {actionModal?.type === "quantity" && (
+          <QuantityModal
+            product={actionModal.product}
+            existingQty={actionModal.existingQty}
+            isNew={actionModal.isNew}
+            onSave={handleQuantitySave}
+            onCancel={() => setActionModal(null)}
+          />
+        )}
+        <Toast message={toastMessage?.text || null} visible={!!toastMessage} />
+      </div>
     </GeminiAssistantProvider>
   );
 }
