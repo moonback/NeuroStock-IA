@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Loader2, Search, Filter, SlidersHorizontal, Eye, List, LayoutGrid, Plus, Tags, Zap } from "lucide-react";
+import { Loader2, Search, Filter, Eye, Tags, Zap } from "lucide-react";
 import { InventoryGrid } from "../InventoryGrid";
 import { CategoryItem, InventoryItem } from "../../types";
 
@@ -31,7 +31,6 @@ type StockTabProps = {
   stockFilter: StockFilter;
   sortBy: SortBy;
   showFilters: boolean;
-  isCompactView: boolean;
   hasActiveFilters: boolean;
   isInventoryLoading: boolean;
   onSearchTermChange: (term: string) => void;
@@ -40,7 +39,6 @@ type StockTabProps = {
   onSortByChange: (sort: SortBy) => void;
   onShowFiltersChange: (show: boolean) => void;
   onShowCategoryModal: () => void;
-  onCompactViewChange: (isCompact: boolean) => void;
   onResetFilters: () => void;
   onUpdateQuantity: (barcode: string, delta: number) => void;
   onRemove: (barcode: string) => void;
@@ -61,7 +59,6 @@ export function StockTab({
   stockFilter,
   sortBy,
   showFilters,
-  isCompactView,
   hasActiveFilters,
   isInventoryLoading,
   onSearchTermChange,
@@ -70,7 +67,6 @@ export function StockTab({
   onSortByChange,
   onShowFiltersChange,
   onShowCategoryModal,
-  onCompactViewChange,
   onResetFilters,
   onUpdateQuantity,
   onRemove,
@@ -82,28 +78,33 @@ export function StockTab({
 
   return (
     <section className="space-y-4 pb-20">
-      {/* Simple Header */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-stone-900">Inventaire</h2>
-          <span className="text-xs font-semibold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">
-            📦 {filteredInventory.length} articles
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => onCompactViewChange(!isCompactView)}
-            className="p-2 text-stone-500 hover:bg-stone-100 rounded-xl"
-          >
-            {isCompactView ? <LayoutGrid className="w-5 h-5" /> : <List className="w-5 h-5" />}
-          </button>
+      {/* Header */}
+      <div className="space-y-3 px-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-bold text-stone-900">Inventaire</h2>
+              <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-600">
+                {filteredInventory.length}/{inventoryLength} articles
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-stone-500">
+              Recherche rapide, filtres et scan en un seul écran.
+            </p>
+          </div>
           <button
             onClick={() => onShowFiltersChange(!showFilters)}
-            className="p-2 text-stone-500 hover:bg-stone-100 rounded-xl"
+            className={`inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition ${
+              showFilters
+                ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                : "border-stone-200 bg-white text-stone-500 hover:bg-stone-100"
+            }`}
+            aria-label={showFilters ? "Masquer les filtres" : "Afficher les filtres"}
           >
-            <Filter className="w-5 h-5" />
+            <Filter className="h-4 w-4" />
           </button>
         </div>
+
       </div>
 
       {/* Search Bar */}
@@ -156,7 +157,7 @@ export function StockTab({
       {/* Show Stats Button */}
       <button
         onClick={() => setShowStats(!showStats)}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold text-stone-600 border border-stone-200 rounded-2xl hover:bg-stone-50"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold text-stone-600 border border-stone-200 rounded-2xl bg-white hover:bg-stone-50"
       >
         <Eye className="w-4 h-4" />
         {showStats ? "Masquer les stats" : "Voir les stats"}
@@ -226,7 +227,7 @@ export function StockTab({
         <InventoryGrid
           items={filteredInventory}
           categories={dbCategories}
-          isCompactView={true}
+          isCompactView={false}
           searchTerm={searchTerm}
           onUpdateQuantity={onUpdateQuantity}
           onRemove={onRemove}

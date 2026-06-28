@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState, useRef, TouchEvent } from "react";
 import { InventoryItem, CategoryItem } from "../types";
-import { Package, Plus, Minus, Trash2, AlertTriangle, Edit2 } from "lucide-react";
+import { Package, Plus, Minus, Trash2 } from "lucide-react";
 import { AnimatedQuantity } from "./AnimatedQuantity";
 import { isRecentTimestamp } from "../lib/utils";
 
@@ -143,6 +143,30 @@ export function InventoryGrid({
     );
   };
 
+  const renderStockBadge = (quantity: number, expanded = false) => {
+    const toneClass =
+      quantity === 0
+        ? "border-rose-200 bg-rose-50 text-rose-700"
+        : quantity <= 5
+          ? "border-amber-200 bg-amber-50 text-amber-700"
+          : "border-emerald-200 bg-emerald-50 text-emerald-700";
+
+    return (
+      <span
+        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+          expanded ? "min-h-7 text-[11px]" : ""
+        } ${toneClass}`}
+      >
+        {expanded ? `${quantity} en stock` : quantity}
+      </span>
+    );
+  };
+
+  const getCategoryLabel = (categoryName: string) => {
+    const categoryMatch = categories.find((category) => category.name.toLowerCase() === categoryName.toLowerCase());
+    return categoryMatch?.icon ? `${categoryMatch.icon} ${categoryName}` : categoryName;
+  };
+
   const groupedItems = useMemo(() => {
     const groups: Record<string, InventoryItem[]> = {};
     items.forEach((item) => {
@@ -175,90 +199,154 @@ export function InventoryGrid({
     <div className="space-y-4">
       {groupedItems.map((group) => (
         <div key={group.category} className="space-y-2 product-grid-enter">
-          {/* Category Header */}
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-bold uppercase tracking-wider text-stone-500">
-              {(() => {
-                const catObj = categories.find(c => c.name.toLowerCase() === group.category.toLowerCase());
-                return catObj?.icon ? `${catObj.icon} ${group.category}` : group.category;
-              })()}
+              {getCategoryLabel(group.category)}
             </h3>
             <span className="text-[10px] font-bold font-mono tabular px-2 py-0.5 bg-stone-100 text-stone-500 rounded-full">
               {group.items.length}
             </span>
           </div>
 
-          {/* Cards */}
-          <div className="space-y-2">
+          <div className={isCompactView ? "space-y-2" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
             {group.items.map((item) => (
               <SwipeableItem
                 key={item.barcode}
-                isCompact={true}
+                isCompact={isCompactView}
                 onSwipeRight={() => onUpdateQuantity(item.barcode, 1)}
                 onSwipeLeft={() => onRemove(item.barcode)}
               >
-                <article
-                  className="flex items-center gap-3 bg-white border border-stone-200 rounded-2xl px-3 py-3"
-                  onClick={() => onEditProduct(item)}
-                >
-                  {/* Image */}
-                  <div className="h-12 w-12 flex-shrink-0 grid place-items-center rounded-xl border border-stone-200 bg-stone-50">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain rounded-lg" />
-                    ) : (
-                      <Package className="h-5 w-5 text-stone-300" />
-                    )}
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-bold text-stone-900">
-                        {renderHighlightedText(item.name, "rounded bg-amber-100 px-0.5 text-stone-950")}
-                      </h4>
-                      {renderNewBadge(item)}
-                    </div>
-                    <div className="text-xs text-stone-500 mt-1">
-                      {item.brand && <span>{item.brand}</span>}
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="flex items-center">
-                    {item.quantity <= 5 && (
-                      <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-50 border border-amber-200 text-[9px] font-bold text-amber-700">
-                        {item.quantity}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div
-                    className="flex items-center rounded-full bg-stone-100 border border-stone-200"
-                    onClick={(e) => e.stopPropagation()}
+                {isCompactView ? (
+                  <article
+                    className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-3 py-3"
+                    onClick={() => onEditProduct(item)}
                   >
-                    <button
-                      onClick={() => onUpdateQuantity(item.barcode, -1)}
-                      className="h-9 w-9 grid place-items-center rounded-l-full text-stone-600 hover:bg-stone-200"
-                      aria-label="Diminuer la quantité"
-                    >
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => onEditQuantity(item)}
-                      className={`px-2 min-w-[32px] text-center font-mono text-xs font-bold tabular py-0.5 ${item.quantity <= 5 ? "text-amber-600" : "text-stone-900"}`}
-                    >
-                      <AnimatedQuantity value={item.quantity} />
-                    </button>
-                    <button
-                      onClick={() => onUpdateQuantity(item.barcode, 1)}
-                      className="h-9 w-9 grid place-items-center rounded-r-full text-stone-600 hover:bg-stone-200"
-                      aria-label="Augmenter la quantité"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </article>
+                    <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl border border-stone-200 bg-stone-50">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name} className="h-full w-full rounded-lg object-contain" />
+                      ) : (
+                        <Package className="h-5 w-5 text-stone-300" />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="font-bold text-stone-900">
+                          {renderHighlightedText(item.name, "rounded bg-amber-100 px-0.5 text-stone-950")}
+                        </h4>
+                        {renderNewBadge(item)}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                        {item.brand && <span className="truncate">{item.brand}</span>}
+                        <span className="font-mono text-[11px] text-stone-400">{item.barcode}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {item.quantity <= 5 && renderStockBadge(item.quantity)}
+                      <div
+                        className="flex items-center rounded-full border border-stone-200 bg-stone-100"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => onUpdateQuantity(item.barcode, -1)}
+                          className="grid h-9 w-9 place-items-center rounded-l-full text-stone-600 hover:bg-stone-200"
+                          aria-label="Diminuer la quantité"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => onEditQuantity(item)}
+                          className={`min-w-[32px] px-2 py-0.5 text-center font-mono text-xs font-bold tabular ${
+                            item.quantity <= 5 ? "text-amber-600" : "text-stone-900"
+                          }`}
+                        >
+                          <AnimatedQuantity value={item.quantity} />
+                        </button>
+                        <button
+                          onClick={() => onUpdateQuantity(item.barcode, 1)}
+                          className="grid h-9 w-9 place-items-center rounded-r-full text-stone-600 hover:bg-stone-200"
+                          aria-label="Augmenter la quantité"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ) : (
+                  <article
+                    className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"
+                    onClick={() => onEditProduct(item)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-2xl border border-stone-200 bg-stone-50">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.name} className="h-full w-full rounded-xl object-contain" />
+                        ) : (
+                          <Package className="h-6 w-6 text-stone-300" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="text-sm font-bold text-stone-900">
+                                {renderHighlightedText(item.name, "rounded bg-amber-100 px-0.5 text-stone-950")}
+                              </h4>
+                              {renderNewBadge(item)}
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-stone-500">
+                              {item.brand && (
+                                <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 font-medium text-stone-600">
+                                  {item.brand}
+                                </span>
+                              )}
+                              <span className="font-mono text-stone-400">{item.barcode}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-shrink-0 items-start">
+                            {renderStockBadge(item.quantity, true)}
+                          </div>
+                        </div>
+
+                        <div
+                          className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-2 py-2"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="min-w-0 px-1 text-[10px] font-medium text-stone-400">
+                            Glisser: droite `+1`, gauche suppression
+                          </div>
+                          <div className="flex items-center rounded-full border border-stone-200 bg-white">
+                            <button
+                              onClick={() => onUpdateQuantity(item.barcode, -1)}
+                              className="grid h-10 w-10 place-items-center rounded-l-full text-stone-600 hover:bg-stone-100"
+                              aria-label="Diminuer la quantité"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => onEditQuantity(item)}
+                              className={`min-w-[40px] px-2 py-1 text-center font-mono text-sm font-bold tabular ${
+                                item.quantity <= 5 ? "text-amber-600" : "text-stone-900"
+                              }`}
+                            >
+                              <AnimatedQuantity value={item.quantity} />
+                            </button>
+                            <button
+                              onClick={() => onUpdateQuantity(item.barcode, 1)}
+                              className="grid h-10 w-10 place-items-center rounded-r-full text-stone-600 hover:bg-stone-100"
+                              aria-label="Augmenter la quantité"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                )}
               </SwipeableItem>
             ))}
           </div>
