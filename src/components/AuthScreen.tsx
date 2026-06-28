@@ -60,7 +60,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           <div className="inline-grid h-14 w-14 place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 mx-auto">
             <Store className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-stone-900">Boutique</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-stone-900">NeuroStock</h1>
           <p className="text-xs text-stone-500 font-medium">
             Connectez-vous pour accéder à votre inventaire
           </p>
