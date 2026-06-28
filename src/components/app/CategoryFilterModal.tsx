@@ -1,5 +1,5 @@
-import type React from "react";
-import { motion } from "motion/react";
+import { useState, useCallback, useEffect, type ReactNode } from "react";
+import { motion, PanInfo } from "motion/react";
 import { Check, Package, Tags, X } from "lucide-react";
 
 type CategoryOption = {
@@ -24,19 +24,75 @@ export function CategoryFilterModal({
   onSelectCategory,
   onClose,
 }: CategoryFilterModalProps) {
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  const handleDrag = useCallback((_: any, info: PanInfo) => {
+    if (info.delta.y > 0) {
+      setDragY(info.offset.y);
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(
+    (_: any, info: PanInfo) => {
+      setIsDragging(false);
+      const velocity = info.velocity.y;
+      const offset = info.offset.y;
+
+      if (velocity > 500 || offset > 150) {
+        onClose();
+      } else {
+        setDragY(0);
+      }
+    },
+    [onClose],
+  );
+
   const selectAndClose = (category: string | null) => {
     onSelectCategory(category);
     onClose();
   };
 
+  const opacity = Math.max(0, 1 - dragY / 300);
+  const scale = Math.max(0.95, 1 - dragY / 1000);
+
   return (
     <div className="fixed inset-0 bg-stone-900/40 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
       <motion.div
-        initial={{ opacity: 0, y: 100 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 100 }}
-        transition={{ type: "spring", damping: 25, stiffness: 220 }}
+        initial={{ opacity: 0, y: '100%' }}
+        animate={{
+          opacity: isDragging ? opacity : 1,
+          y: isDragging ? dragY : 0,
+          scale: isDragging ? scale : 1,
+        }}
+        exit={{ opacity: 0, y: '100%' }}
+        transition={
+          isDragging
+            ? { duration: 0 }
+            : { type: 'spring', damping: 30, stiffness: 350 }
+        }
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.2}
+        onDragStart={handleDragStart}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
         className="w-full sm:max-w-md bg-white border-t sm:border border-stone-200 rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl shadow-stone-900/25 overflow-hidden pb-safe max-h-[92vh] overflow-y-auto no-scrollbar"
+        style={{ touchAction: 'pan-x' }}
       >
         <div className="flex justify-center py-3 sm:hidden sticky top-0 bg-white z-10">
           <div className="w-12 h-1.5 bg-stone-300 rounded-full" />
@@ -44,7 +100,7 @@ export function CategoryFilterModal({
 
         <div className="p-6">
           <div className="absolute top-4 right-4 hidden sm:block">
-            <button onClick={onClose} className="p-2 text-stone-400 hover:text-stone-900 rounded-full hover:bg-stone-100 transition">
+            <button onClick={onClose} className="p-2 text-stone-400 hover:text-stone-900 rounded-full hover:bg-stone-100 transition touch-target">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -90,7 +146,7 @@ export function CategoryFilterModal({
             })}
           </div>
 
-          <button onClick={onClose} className="w-full py-4 text-sm font-semibold text-stone-500 bg-transparent border border-stone-200 hover:bg-stone-50 hover:text-stone-800 active:scale-95 rounded-2xl transition">
+          <button onClick={onClose} className="w-full py-4 text-sm font-semibold text-stone-500 bg-transparent border border-stone-200 hover:bg-stone-50 hover:text-stone-800 active:scale-[0.98] rounded-2xl transition touch-target">
             Annuler
           </button>
         </div>
@@ -103,7 +159,7 @@ type CategoryButtonProps = {
   active: boolean;
   title: string;
   subtitle: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   onClick: () => void;
 };
 
@@ -111,7 +167,7 @@ function CategoryButton({ active, title, subtitle, icon, onClick }: CategoryButt
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between p-3 rounded-xl border transition ${
+      className={`w-full flex items-center justify-between p-3 rounded-xl border transition touch-target ${
         active
           ? "bg-indigo-600 border-indigo-600 text-white"
           : "bg-white border-stone-200 text-stone-900 hover:border-indigo-300 hover:bg-indigo-50"

@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
+import { Mic } from 'lucide-react';
 import { GeminiAssistantContext, GeminiAssistantContextValue } from './GeminiAssistantContext';
 import { AssistantState, AssistantContext } from './types';
 import { LiveSession } from './LiveSession';
@@ -263,10 +265,37 @@ export function GeminiAssistantProvider({
     <GeminiAssistantContext.Provider value={contextValue}>
       {children}
 
+      {/* Floating trigger button when closed and not minimized */}
+      {!isOpen && !isMinimized && (
+        <motion.button
+          onClick={open}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="fixed bottom-24 right-4 z-40 h-14 w-14 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 flex items-center justify-center transition-colors hover:bg-indigo-700"
+          aria-label="Ouvrir Julien, l'assistant vocal"
+        >
+          <Mic className="h-6 w-6" />
+          <motion.span
+            className="absolute inset-0 rounded-full border-2 border-white/50"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0, 0.3],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        </motion.button>
+      )}
+
+      {/* Minimized bubble */}
       {isMinimized && !isOpen && (
         <FloatingBubble state={state} onExpand={handleExpand} />
       )}
 
+      {/* Main drawer */}
       <GeminiDrawer
         isOpen={isOpen}
         state={state}
@@ -276,6 +305,7 @@ export function GeminiAssistantProvider({
         onToggleMute={handleToggleMute}
       />
 
+      {/* Permission confirmation dialog */}
       <PermissionDialog
         isOpen={!!pendingPermission}
         toolName={pendingPermission?.toolName ?? ''}
