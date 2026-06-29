@@ -16,7 +16,7 @@ export function StockScanModeToggle({
   onModeChange,
 }: StockScanModeToggleProps) {
   return (
-    <div className="mb-4 rounded-2xl border border-stone-200 bg-stone-50 p-3 sm:mb-5 sm:p-3.5">
+    <div className="mb-3 rounded-2xl border border-stone-200/60 bg-white p-3 shadow-sm sm:mb-4 sm:p-3.5">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -45,34 +45,34 @@ export function StockScanModeToggle({
         </button>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-stone-200 bg-white p-1">
-        <button
-          type="button"
-          onClick={() => onModeChange("add")}
-          disabled={!enabled}
-          className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold transition disabled:opacity-50 ${
-            mode === "add"
-              ? "bg-emerald-600 text-white shadow-sm"
-              : "text-stone-500 hover:bg-stone-50 hover:text-stone-800"
-          }`}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Ajouter au stock
-        </button>
-        <button
-          type="button"
-          onClick={() => onModeChange("remove")}
-          disabled={!enabled}
-          className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold transition disabled:opacity-50 ${
-            mode === "remove"
-              ? "bg-rose-600 text-white shadow-sm"
-              : "text-stone-500 hover:bg-stone-50 hover:text-stone-800"
-          }`}
-        >
-          <Minus className="h-3.5 w-3.5" />
-          Retirer du stock
-        </button>
-      </div>
+      {enabled && (
+        <div className="mt-3 grid grid-cols-2 gap-1.5 rounded-xl border border-stone-200/60 bg-stone-50/50 p-1">
+          <button
+            type="button"
+            onClick={() => onModeChange("add")}
+            className={`flex min-h-9 items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold transition select-none cursor-pointer ${
+              mode === "add"
+                ? "bg-white text-emerald-700 border border-emerald-200/80 shadow-xs"
+                : "text-stone-400 hover:bg-white/70 hover:text-stone-700"
+            }`}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Ajouter
+          </button>
+          <button
+            type="button"
+            onClick={() => onModeChange("remove")}
+            className={`flex min-h-9 items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold transition select-none cursor-pointer ${
+              mode === "remove"
+                ? "bg-white text-rose-600 border border-rose-200/80 shadow-xs"
+                : "text-stone-400 hover:bg-white/70 hover:text-stone-700"
+            }`}
+          >
+            <Minus className="h-3.5 w-3.5" />
+            Retirer
+          </button>
+        </div>
+      )}
     </div>
   );
 }

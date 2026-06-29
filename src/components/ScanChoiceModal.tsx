@@ -112,24 +112,27 @@ export function ScanChoiceModal({ product, onChooseStock, onChooseEdit, onCancel
 
           <div className="space-y-3">
             <button
+              type="button"
               onClick={onChooseStock}
-              className="w-full py-4 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl text-white font-bold text-sm shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2.5 transition touch-target"
+              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-755 active:scale-[0.98] rounded-xl text-white font-bold text-xs shadow-md shadow-indigo-600/10 flex items-center justify-center gap-1.5 transition select-none cursor-pointer tap-active"
             >
-              <ClipboardList className="w-5 h-5" />
-              Modifier le stock (+ ou -)
+              <ClipboardList className="w-4 h-4" />
+              Modifier la quantité en stock
             </button>
 
             <button
+              type="button"
               onClick={onChooseEdit}
-              className="w-full py-4 px-4 bg-stone-50 hover:bg-stone-100 border border-stone-200 active:scale-[0.98] rounded-2xl text-stone-700 font-bold text-sm flex items-center justify-center gap-2.5 transition touch-target"
+              className="w-full py-3 px-4 bg-white hover:bg-stone-50 border border-stone-200/80 active:scale-[0.98] rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs flex items-center justify-center gap-1.5 transition select-none cursor-pointer tap-active"
             >
-              <Edit3 className="w-5 h-5 text-stone-500" />
+              <Edit3 className="w-4 h-4" />
               Modifier la fiche produit
             </button>
 
             <button
+              type="button"
               onClick={onCancel}
-              className="w-full py-3 text-xs font-semibold text-stone-400 hover:text-stone-600 transition touch-target"
+              className="w-full py-2.5 text-xs font-bold text-stone-400 hover:text-stone-600 transition select-none cursor-pointer tap-active"
             >
               Fermer
             </button>
