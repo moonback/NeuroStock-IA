@@ -46,7 +46,7 @@ export function Header({
 
           <div className="min-w-0 flex-1 flex flex-col justify-center">
             <h1 className="text-sm font-extrabold tracking-tight text-stone-900 leading-tight">
-              Superette Salengro
+              NeuroStock
             </h1>
             {/* Compact stats */}
             <div className="mt-1 flex items-center flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] font-bold text-stone-500">
@@ -90,13 +90,12 @@ export function Header({
                     isRunning ? (isPaused ? "Reprendre la génération" : "Mettre en pause")
                       : `Générer les embeddings (${embeddedCount}/${inventoryLength})`
                   }
-                  className={`touch-target grid h-10 w-10 place-items-center rounded-xl border transition tap-active disabled:opacity-50 cursor-pointer ${
-                    isRunning
+                  className={`touch-target grid h-10 w-10 place-items-center rounded-xl border transition tap-active disabled:opacity-50 cursor-pointer ${isRunning
                       ? isPaused
                         ? "border-amber-200 bg-amber-50/50 text-amber-600"
                         : "border-indigo-200 bg-indigo-50/55 text-indigo-600"
                       : "border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
-                  }`}
+                    }`}
                 >
                   {isRunning ? (
                     isPaused ? (

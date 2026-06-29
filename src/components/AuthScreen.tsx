@@ -66,7 +66,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             <Store className="h-8 w-8" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-stone-900">Superette Salengro</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-stone-900">NeuroStock</h1>
             <p className="mt-1 text-xs text-stone-400 font-medium leading-relaxed">
               Connectez-vous pour accéder à votre inventaire
             </p>

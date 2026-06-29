@@ -246,7 +246,7 @@ npm run build
 ## 📄 Licences & mentions
 
 - Dépendances open-source : React, Vite, Tailwind, Supabase, Lucide, Motion, OpenFoodFacts, OpenRouter, Google Gemini.
-- Application propriétaire : [`Superette-salengro`](https://github.com/moonback/Superette-salengro).
+- Application propriétaire : [`NeuroStock`](https://github.com/moonback/NeuroStock).
 
 ---
 
