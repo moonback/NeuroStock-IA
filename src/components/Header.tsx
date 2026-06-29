@@ -31,8 +31,7 @@ export function Header({
   onSyncNow,
   embeddingGenerator,
 }: HeaderProps) {
-  const { isRunning, isPaused, progress, start, pause, resume, stop, canStart, currentProductName } = embeddingGenerator;
-  const embeddedCount = inventoryLength - progress.total + progress.current;
+  const { isRunning, isPaused, progress, start, pause, resume, stop, canStart, currentProductName, embeddedCount } = embeddingGenerator;
   const canSync = isOnline && pendingCount > 0 && !!onSyncNow;
 
   return (

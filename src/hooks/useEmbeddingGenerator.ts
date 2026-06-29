@@ -14,29 +14,43 @@ export type EmbeddingState = {
   };
   currentProductName?: string;
   errors: Array<{ productName: string; error: string }>;
+  embeddedCount: number;
 };
 
 export const useEmbeddingGenerator = (inventory: InventoryItem[]) => {
+  const getProductsWithoutEmbeddings = useCallback(() => {
+    return inventory.filter(item => !item.embedding || item.embedding.length === 0);
+  }, [inventory]);
+
+  const getProductsWithEmbeddings = useCallback(() => {
+    return inventory.filter(item => item.embedding && item.embedding.length > 0);
+  }, [inventory]);
+
   const [state, setState] = useState<EmbeddingState>({
     isRunning: false,
     isPaused: false,
     progress: { current: 0, total: 0, percentage: 0 },
     errors: [],
+    embeddedCount: 0,
   });
 
   const queueRef = useRef<InventoryItem[]>([]);
   const shouldContinueRef = useRef(true);
   const isPausedRef = useRef(false);
+  const productsWithoutEmbeddingsRef = useRef<InventoryItem[]>([]);
 
-  // Filter products that don't have embeddings
-  const getProductsWithoutEmbeddings = useCallback(() => {
-    return inventory.filter(item => !item.embedding || item.embedding.length === 0);
-  }, [inventory]);
+  useEffect(() => {
+    productsWithoutEmbeddingsRef.current = getProductsWithoutEmbeddings();
+    setState(prev => ({
+      ...prev,
+      embeddedCount: getProductsWithEmbeddings().length,
+    }));
+  }, [inventory, getProductsWithoutEmbeddings, getProductsWithEmbeddings]);
 
   // Start the embedding generation
   const start = useCallback(() => {
-    const productsToProcess = getProductsWithoutEmbeddings();
-    
+    const productsToProcess = productsWithoutEmbeddingsRef.current;
+
     if (productsToProcess.length === 0) {
       return;
     }
@@ -112,6 +126,7 @@ export const useEmbeddingGenerator = (inventory: InventoryItem[]) => {
         const embedding = await generateProductEmbedding(product);
         const updatedProduct = { ...product, embedding, lastUpdated: Date.now() };
         await syncInventoryItem(updatedProduct);
+        setState(prev => ({ ...prev, embeddedCount: prev.embeddedCount + 1 }));
       } catch (error) {
         setState(prev => ({
           ...prev,
@@ -148,6 +163,6 @@ export const useEmbeddingGenerator = (inventory: InventoryItem[]) => {
     pause,
     resume,
     stop,
-    canStart: getProductsWithoutEmbeddings().length > 0,
+    canStart: productsWithoutEmbeddingsRef.current.length > 0,
   };
 };
