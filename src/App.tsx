@@ -10,6 +10,7 @@ import { AuthScreen } from "./components/AuthScreen";
 import { Toast } from "./components/Toast";
 import { ExportModal } from "./components/ExportModal";
 import { ProductDetailsModal } from "./components/ProductDetailsModal";
+import { VectorizeConfirmModal } from "./components/VectorizeConfirmModal";
 import { InventoryItem, ProductLookupData, CategoryItem } from "./types";
 import {
   isSupabaseConfigured,
@@ -142,6 +143,7 @@ export default function App() {
   const [stockScanMode, setStockScanMode] = useState<StockScanMode>("add");
   const [scannerInputMode, setScannerInputMode] = useState<ScannerInputMode>("hardware");
   const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
+  const [showVectorizeConfirm, setShowVectorizeConfirm] = useState(false);
 
   const showToast = useCallback((text: string) => {
     const id = Date.now();
@@ -1281,6 +1283,7 @@ export default function App() {
           onExport={() => setShowExportModal(true)}
           onLogout={handleLogout}
           onSyncNow={() => void flushQueue()}
+          onRequestVectorize={() => setShowVectorizeConfirm(true)}
           embeddingGenerator={embeddingGenerator}
         />
 
@@ -1394,6 +1397,24 @@ export default function App() {
             items={inventory}
             categories={dbCategories}
             onClose={() => setShowExportModal(false)}
+          />
+        )}
+
+        {showVectorizeConfirm && (
+          <VectorizeConfirmModal
+            open={showVectorizeConfirm}
+            inventoryLength={inventory.length}
+            productsToVectorize={Math.max(0, inventory.length - embeddingGenerator.embeddedCount)}
+            isRunning={embeddingGenerator.isRunning}
+            isPaused={embeddingGenerator.isPaused}
+            onConfirm={() => {
+              setShowVectorizeConfirm(false);
+              embeddingGenerator.start();
+            }}
+            onCancel={() => setShowVectorizeConfirm(false)}
+            onResume={embeddingGenerator.resume}
+            onPause={embeddingGenerator.pause}
+            onStop={embeddingGenerator.stop}
           />
         )}
 

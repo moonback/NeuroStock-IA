@@ -14,6 +14,7 @@ interface HeaderProps {
   onExport: () => void;
   onLogout: () => void;
   onSyncNow?: () => void;
+  onRequestVectorize?: () => void;
   embeddingGenerator: ReturnType<typeof useEmbeddingGenerator>;
 }
 
@@ -29,6 +30,7 @@ export function Header({
   onExport,
   onLogout,
   onSyncNow,
+  onRequestVectorize,
   embeddingGenerator,
 }: HeaderProps) {
   const { isRunning, isPaused, progress, start, pause, resume, stop, canStart, currentProductName, embeddedCount } = embeddingGenerator;
@@ -79,7 +81,7 @@ export function Header({
             {showExport && (embeddedCount < inventoryLength || isRunning) && (
               <div className="relative">
                 <button
-                  onClick={() => isRunning ? (isPaused ? resume() : pause()) : start()}
+                  onClick={() => isRunning ? (isPaused ? resume() : pause()) : (onRequestVectorize ? onRequestVectorize() : start())}
                   disabled={!canStart && !isRunning}
                   aria-label={
                     isRunning ? (isPaused ? "Reprendre la génération" : "Mettre en pause")
