@@ -1,6 +1,6 @@
 {
-  "name": "Boutique - Gestion d'Inventaire",
-  "short_name": "Boutique",
+  "name": "NeuroStock - Gestion d'Inventaire",
+  "short_name": "NeuroStock",
   "description": "Gestionnaire d'inventaire moderne, professionnel, minimaliste et optimisé pour mobile.",
   "start_url": "/",
   "display": "standalone",

@@ -119,7 +119,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full h-11 pl-10 pr-4 glass-input rounded-xl text-sm font-semibold text-stone-900 outline-none transition"
-                    placeholder="nom@boutique.com"
+                    placeholder="nom@neurostock.com"
                     disabled={loading}
                   />
                 </div>
