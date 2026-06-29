@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Loader2, Minus, Package, Plus, Scan, ArrowRight } from "lucide-react";
 import { CameraBarcodeScanner } from "../CameraBarcodeScanner";
@@ -53,7 +52,7 @@ export function ScanTab({
           <button
             onClick={() => document.getElementById("barcode-input")?.focus()}
             disabled={isScannerDisabled}
-            className="w-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-3xl p-6 flex flex-col items-center justify-center gap-3 shadow-lg shadow-indigo-600/25 transition active:scale-98 hover:from-indigo-700 hover:to-violet-700 mb-4"
+            className="w-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-3xl p-6 flex flex-col items-center justify-center gap-3 shadow-lg shadow-indigo-600/25 transition active:scale-98 hover:from-indigo-700 hover:to-violet-700 mb-5"
           >
             <div className="h-14 w-14 bg-white/20 rounded-2xl grid place-items-center relative">
               <Scan className="h-7 w-7 animate-pulse" />
@@ -68,12 +67,12 @@ export function ScanTab({
             </div>
           </button>
         ) : (
-          <div className="rounded-3xl overflow-hidden shadow-lg shadow-stone-900/10 mb-4 bg-stone-900 aspect-[4/3] relative">
+          <div className="rounded-3xl overflow-hidden shadow-lg shadow-stone-900/10 mb-5 bg-stone-900 aspect-[4/3] relative">
             <CameraBarcodeScanner enabled={!isScannerDisabled} isBusy={!!loadingBarcode} onScan={onScan} />
           </div>
         )}
 
-        {/* Scanner Mode Toggle */}
+        {/* Scanner Mode Toggle — separated from the manual input below by its own breathing room */}
         <ScannerInputModeToggle
           mode={scannerInputMode}
           onModeChange={onScannerInputModeChange}
@@ -82,7 +81,7 @@ export function ScanTab({
 
         {/* Input Area (only visible in hardware mode) */}
         {scannerInputMode === "hardware" && (
-          <div className="mt-4">
+          <div className="mt-5">
             <ManualInput onScan={onScan} isActive={!isScannerDisabled} />
           </div>
         )}
@@ -123,7 +122,7 @@ const RecentScanItem: React.FC<RecentScanItemProps> = ({ item, onEditProduct, on
   return (
     <div
       onClick={() => onEditProduct(item)}
-      className="relative overflow-hidden rounded-2xl border border-stone-200 bg-white px-4 py-3 flex items-center justify-between gap-3 hover:border-stone-300 hover:shadow-sm cursor-pointer select-none transition group"
+      className="relative overflow-hidden rounded-2xl border border-stone-200 bg-white px-4 py-3 flex items-center justify-between gap-4 hover:border-stone-300 hover:shadow-sm cursor-pointer select-none transition group"
     >
       <div className="min-w-0 flex-1 flex items-center gap-3">
         <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl border border-stone-200 bg-stone-50 p-1">
@@ -138,20 +137,34 @@ const RecentScanItem: React.FC<RecentScanItemProps> = ({ item, onEditProduct, on
         </div>
       </div>
 
-      <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
+      {/* Quantity controls: stopPropagation keeps this separate from the card's
+          "open product" tap, and gap-2.5 + a flex-shrink-0 wrapper keeps the
+          low-stock badge from crowding the +/- pill. */}
+      <div className="flex flex-shrink-0 items-center gap-2.5" onClick={(event) => event.stopPropagation()}>
         {item.quantity <= 5 && (
-          <div className="h-7 w-7 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-[9px] font-bold text-amber-700">
+          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-amber-50 border border-amber-200 grid place-items-center text-[9px] font-bold text-amber-700">
             {item.quantity}
           </div>
         )}
         <div className="flex items-center rounded-full bg-stone-50 border border-stone-200">
-          <button onClick={() => onUpdateQuantity(item.barcode, -1)} className="h-9 w-9 grid place-items-center rounded-l-full text-stone-500 active:scale-90 hover:text-stone-900 transition cursor-pointer" aria-label="Diminuer la quantité">
+          <button
+            onClick={() => onUpdateQuantity(item.barcode, -1)}
+            className="touch-target h-10 w-10 grid place-items-center rounded-l-full text-stone-500 active:scale-90 hover:text-stone-900 transition cursor-pointer"
+            aria-label="Diminuer la quantité"
+          >
             <Minus className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => onEditQuantity(item)} className={`px-2 min-w-[32px] text-center text-xs font-bold font-mono tabular py-0.5 hover:text-indigo-600 cursor-pointer ${item.quantity <= 5 ? "text-amber-600" : "text-stone-900"}`}>
+          <button
+            onClick={() => onEditQuantity(item)}
+            className={`px-2.5 min-w-[36px] text-center text-xs font-bold font-mono tabular py-0.5 hover:text-indigo-600 cursor-pointer ${item.quantity <= 5 ? "text-amber-600" : "text-stone-900"}`}
+          >
             <AnimatedQuantity value={item.quantity} />
           </button>
-          <button onClick={() => onUpdateQuantity(item.barcode, 1)} className="h-9 w-9 grid place-items-center rounded-r-full text-stone-500 active:scale-90 hover:text-stone-900 transition cursor-pointer" aria-label="Augmenter la quantité">
+          <button
+            onClick={() => onUpdateQuantity(item.barcode, 1)}
+            className="touch-target h-10 w-10 grid place-items-center rounded-r-full text-stone-500 active:scale-90 hover:text-stone-900 transition cursor-pointer"
+            aria-label="Augmenter la quantité"
+          >
             <Plus className="h-3.5 w-3.5" />
           </button>
         </div>
