@@ -1328,7 +1328,7 @@ export default function App() {
                 recentlyScanned={recentlyScanned}
                 onScannerInputModeChange={setScannerInputMode}
                 onScan={handleScan}
-                onEditProduct={(item) => setActionModal({ type: "edit", product: item })}
+                onEditProduct={(item) => setActionModal({ type: "product_details", product: item })}
                 onEditQuantity={(item) =>
                   setActionModal({
                     type: "quantity",
@@ -1384,7 +1384,7 @@ export default function App() {
                   isNew: false,
                 })}
                 onEditProduct={(item) => setActionModal({
-                  type: "edit",
+                  type: "product_details",
                   product: item,
                 })}
                 onOpenScan={() => setActiveTab("scan")}
