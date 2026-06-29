@@ -5,12 +5,13 @@ import { FunctionDispatcher } from '../components/GeminiAssistant/FunctionDispat
 import { LiveSession } from '../components/GeminiAssistant/LiveSession';
 import type { AssistantExternalContext, GeminiAssistantContextValue, GeminiAssistantProviderProps, PermissionRequest } from '../components/GeminiAssistant/types';
 import { AssistantState } from '../components/GeminiAssistant/types';
+import type { ProactiveSignal } from '../types';
 
 export const GeminiAssistantContext = createContext<GeminiAssistantContextValue | null>(null);
 
 const emptyContext = async (): Promise<AssistantExternalContext> => ({ language: 'français', offlineMode: !navigator.onLine });
 
-export function GeminiAssistantProvider({ children, getContext = emptyContext, toolHandlers = {}, autoRender = true }: GeminiAssistantProviderProps) {
+export function GeminiAssistantProvider({ children, getContext = emptyContext, toolHandlers = {}, autoRender = true, proactiveSignals }: GeminiAssistantProviderProps & { proactiveSignals?: ProactiveSignal[] }) {
   const [state, setState] = useState(AssistantState.Idle);
   const [isOpen, setOpen] = useState(false);
   const [isMinimized, setMinimized] = useState(false);
@@ -53,6 +54,9 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
     try {
       const dispatcher = new FunctionDispatcher(toolHandlers, askPermission, readContext);
       const currentContext = await readContext();
+      if (proactiveSignals?.length) {
+        currentContext.proactiveSignals = proactiveSignals;
+      }
       session.current = new LiveSession(audio.current, {
         onOpen: () => setState(AssistantState.Listening),
         onClose: () => setState(AssistantState.Idle),
@@ -89,7 +93,7 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
   return (
     <GeminiAssistantContext.Provider value={value}>
       {children}
-      {autoRender && <GeminiAssistant state={state} isOpen={isOpen} isMinimized={isMinimized} isMuted={isMuted} error={error} autoAccept={autoAccept} setAutoAccept={setAutoAccept} permission={permission} onOpen={() => void open()} onClose={() => void close()} onMinimize={minimize} onMuteToggle={isMuted ? unmute : mute} onStop={() => void stop()} onPermission={resolvePermission} />}
+      {autoRender && <GeminiAssistant state={state} isOpen={isOpen} isMinimized={isMinimized} isMuted={isMuted} error={error} autoAccept={autoAccept} setAutoAccept={setAutoAccept} permission={permission} proactiveSignals={proactiveSignals} onOpen={() => void open()} onClose={() => void close()} onMinimize={minimize} onMuteToggle={isMuted ? unmute : mute} onStop={() => void stop()} onPermission={resolvePermission} />}
     </GeminiAssistantContext.Provider>
   );
 }

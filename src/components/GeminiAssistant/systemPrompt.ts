@@ -1,4 +1,5 @@
 import type { AssistantExternalContext } from './types';
+import type { ProactiveSignal } from '../../types';
 
 function formatPrice(value?: number): string {
   return typeof value === 'number' && Number.isFinite(value)
@@ -19,6 +20,15 @@ export function buildSystemPrompt(context: AssistantExternalContext = {}): strin
   const totalProducts = inventory.length;
   const totalStock = inventory.reduce((sum, item) => sum + item.quantity, 0);
   const lowStockCount = inventory.filter(item => item.quantity <= 5).length;
+
+  const signals: ProactiveSignal[] = context.proactiveSignals ?? [];
+  const pendingSignals = signals.filter((s) => !s.acknowledged);
+  const proactiveSection = pendingSignals.length
+    ? `# 📡 SIGNAUX PROACTIFS\n\n${pendingSignals
+        .slice(0, 5)
+        .map((s) => `- [${s.severity}] ${s.type}${s.itemId ? ` (id:${s.itemId})` : ''} : ${s.message}`)
+        .join('\n')}`
+    : '';
 
   return `
 # 🎙️ MODE VOCAL STRICT
@@ -156,7 +166,7 @@ Si offline :
 
 ---
 
-# 👤 UTILISATEUR
+${proactiveSection ? proactiveSection + '\n\n---\n' : ''}# 👤 UTILISATEUR
 
 ${userLabel}
 

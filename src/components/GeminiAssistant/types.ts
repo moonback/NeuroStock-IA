@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { ProactiveSignal } from '../../types';
 
 export enum AssistantState {
   Idle = 'idle',
@@ -69,6 +70,7 @@ export interface AssistantExternalContext {
   offlineMode?: boolean;
   businessRules?: string[];
   storeName?: string;
+  proactiveSignals?: ProactiveSignal[];
 }
 
 export type ExternalContextReader = () => AssistantExternalContext | Promise<AssistantExternalContext>;

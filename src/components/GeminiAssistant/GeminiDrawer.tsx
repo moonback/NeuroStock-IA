@@ -1,7 +1,9 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, X, Minus, Check, Volume2, Loader2, Wifi, AlertTriangle } from 'lucide-react';
 import { AssistantState } from './types';
+import type { ProactiveSignal } from '../../types';
+import { ProactiveFeed } from '../../components/Proactive/ProactiveFeed';
 
 interface Props {
   state: AssistantState;
@@ -13,6 +15,9 @@ interface Props {
   onClose: () => void;
   onMuteToggle: () => void;
   onStop: () => void;
+  signals?: ProactiveSignal[];
+  onAcknowledgeSignal?: (id: string) => void;
+  onActionSignal?: (id: string) => void;
 }
 
 /* ── State metadata ─────────────────────────────────────────── */
@@ -108,7 +113,11 @@ export function GeminiDrawer({
   onClose,
   onMuteToggle,
   onStop,
+  signals,
+  onAcknowledgeSignal,
+  onActionSignal,
 }: Props) {
+  const [showAssistantPanel, setShowAssistantPanel] = useState(true);
   const effectiveState = isMuted ? AssistantState.Muted : state;
   const meta = STATE_META[effectiveState] ?? STATE_META[AssistantState.Idle];
   const isActive =
@@ -140,6 +149,28 @@ export function GeminiDrawer({
             <h2 className="text-base font-extrabold text-stone-900 leading-tight">
               Assistant vocal
             </h2>
+            <div className="flex items-center gap-1.5 mt-1 rounded-xl bg-stone-100 p-1">
+              <button
+                type="button"
+                onClick={() => setShowAssistantPanel(true)}
+                className={`rounded-lg px-2.5 py-1 text-[10px] font-bold transition cursor-pointer select-none ${showAssistantPanel
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-500 hover:text-stone-700'
+                  }`}
+              >
+                Assistant
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAssistantPanel(false)}
+                className={`rounded-lg px-2.5 py-1 text-[10px] font-bold transition cursor-pointer select-none ${!showAssistantPanel
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-500 hover:text-stone-700'
+                  }`}
+              >
+                Signaux
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Auto-accept toggle */}
@@ -173,51 +204,61 @@ export function GeminiDrawer({
           </div>
         </div>
 
-        {/* ── Avatar + Wave ── */}
-        <div className="flex flex-col items-center gap-4 py-3">
-          {/* Avatar */}
-          <div className="relative">
-            {/* Outer sonar rings */}
-            <AnimatePresence>
-              {isActive && !isMuted && (
-                <>
-                  {[1, 2].map((i) => (
-                    <motion.span
-                      key={i}
-                      className={`absolute inset-0 rounded-full ${meta.accent.split(' ')[0]} opacity-20`}
-                      initial={{ scale: 1, opacity: 0.25 }}
-                      animate={{ scale: 1 + i * 0.35, opacity: 0 }}
-                      transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.4, ease: 'easeOut' }}
-                    />
-                  ))}
-                </>
-              )}
-            </AnimatePresence>
-            <div
-              className={`relative grid h-20 w-20 place-items-center rounded-full text-white shadow-xl ${meta.accent}`}
-            >
-              {meta.icon}
+        {showAssistantPanel ? (
+          <>
+            {/* ── Avatar + Wave ── */}
+            <div className="flex flex-col items-center gap-4 py-3">
+              {/* Avatar */}
+              <div className="relative">
+                {/* Outer sonar rings */}
+                <AnimatePresence>
+                  {isActive && !isMuted && (
+                    <>
+                      {[1, 2].map((i) => (
+                        <motion.span
+                          key={i}
+                          className={`absolute inset-0 rounded-full ${meta.accent.split(' ')[0]} opacity-20`}
+                          initial={{ scale: 1, opacity: 0.25 }}
+                          animate={{ scale: 1 + i * 0.35, opacity: 0 }}
+                          transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.4, ease: 'easeOut' }}
+                        />
+                      ))}
+                    </>
+                  )}
+                </AnimatePresence>
+                <div
+                  className={`relative grid h-20 w-20 place-items-center rounded-full text-white shadow-xl ${meta.accent}`}
+                >
+                  {meta.icon}
+                </div>
+              </div>
+
+              {/* State label */}
+              <div className="text-center">
+                <p className="text-sm font-extrabold text-stone-900 tracking-tight">{meta.label}</p>
+                <p className="text-[11px] font-medium text-stone-400 mt-0.5">{meta.sub}</p>
+              </div>
+
+              {/* Sound wave visualiser */}
+              <div className={`text-${meta.accent.includes('emerald') ? 'emerald' : meta.accent.includes('indigo') ? 'indigo' : 'violet'}-500`}>
+                <SoundWave active={meta.wave && !isMuted} />
+              </div>
             </div>
-          </div>
 
-          {/* State label */}
-          <div className="text-center">
-            <p className="text-sm font-extrabold text-stone-900 tracking-tight">{meta.label}</p>
-            <p className="text-[11px] font-medium text-stone-400 mt-0.5">{meta.sub}</p>
-          </div>
-
-          {/* Sound wave visualiser */}
-          <div className={`text-${meta.accent.includes('emerald') ? 'emerald' : meta.accent.includes('indigo') ? 'indigo' : 'violet'}-500`}>
-            <SoundWave active={meta.wave && !isMuted} />
-          </div>
-        </div>
-
-        {/* ── Error banner ── */}
-        {error && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-xs font-medium text-rose-700">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            {error}
-          </div>
+            {/* ── Error banner ── */}
+            {error && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-xs font-medium text-rose-700">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                {error}
+              </div>
+            )}
+          </>
+        ) : (
+          <ProactiveFeed
+            signals={signals ?? []}
+            onAcknowledge={onAcknowledgeSignal}
+            onAction={onActionSignal}
+          />
         )}
 
         {/* ── Action buttons ── */}

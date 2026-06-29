@@ -12,7 +12,8 @@ import { ExportModal } from "./components/ExportModal";
 import { ProductDetailsModal } from "./components/ProductDetailsModal";
 import { VectorizeConfirmModal } from "./components/VectorizeConfirmModal";
 import { Onboarding } from "./components/Onboarding";
-import { InventoryItem, ProductLookupData, CategoryItem } from "./types";
+import { InventoryItem, ProductLookupData, CategoryItem, ProactiveSignal } from "./types";
+import { buildProactiveSignals } from "./lib/proactiveEngine";
 import {
   isSupabaseConfigured,
 } from "./lib/supabaseInventory";
@@ -889,10 +890,26 @@ export default function App() {
     ],
   };
 
+  const proactiveSignals = useMemo<ProactiveSignal[]>(() => {
+    return buildProactiveSignals({
+      products: inventory.map(({ barcode, name, category, quantity, purchasePrice, salesPrice, lastMovement }) => ({
+        barcode,
+        name,
+        category,
+        quantity,
+        purchasePrice,
+        salesPrice,
+        lastMovement,
+      })),
+      categories: dbCategories.map(({ id, name }) => ({ id, name })),
+    });
+  }, [inventory, dbCategories]);
+
   return (
     <>
       <GeminiAssistantProvider
         getContext={() => assistantContext}
+        proactiveSignals={proactiveSignals}
         toolHandlers={{
           searchProduct: async (args) => {
             const rawQuery = String(args.query ?? "");

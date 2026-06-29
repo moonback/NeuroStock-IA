@@ -6,6 +6,7 @@ import { AssistantState } from './types';
 interface FloatingBubbleProps {
   state: AssistantState;
   onExpand: () => void;
+  proactiveCount?: number;
 }
 
 // Single source of truth for bubble dimensions + screen padding.
@@ -39,7 +40,7 @@ function clampPosition(pos: { x: number; y: number }, bounds: ReturnType<typeof 
   };
 }
 
-export function FloatingBubble({ state, onExpand }: FloatingBubbleProps) {
+export function FloatingBubble({ state, onExpand, proactiveCount = 0 }: FloatingBubbleProps) {
   const [position, setPosition] = useState(() => clampPosition({ x: 16, y: 16 }, getBounds()));
   const controls = useAnimation();
   const dragDistanceRef = useRef(0);
@@ -217,6 +218,14 @@ export function FloatingBubble({ state, onExpand }: FloatingBubbleProps) {
           {/* Live indicator dot */}
           {cfg.pulse && (
             <span className="relative z-10 h-1.5 w-1.5 rounded-full bg-white animate-pulse flex-shrink-0" aria-hidden="true" />
+          )}
+          {proactiveCount > 0 && (
+            <motion.span
+              className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-500 shadow-lg shadow-amber-500/40"
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+              aria-hidden="true"
+            />
           )}
         </motion.button>
       </motion.div>

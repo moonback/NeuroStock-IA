@@ -32,3 +32,25 @@ export interface CategoryItem {
   icon?: string;
 }
 
+export type ProactiveSignalType =
+  | 'low_stock'
+  | 'out_of_stock'
+  | 'dormant_stock'
+  | 'category_empty'
+  | 'low_margin';
+
+export type ProactiveSignalSeverity = 'info' | 'warning' | 'critical';
+
+export interface ProactiveSignal {
+  id: string;
+  type: ProactiveSignalType;
+  message: string;
+  severity: ProactiveSignalSeverity;
+  itemId?: string;
+  timestamp: number;
+  acknowledged?: boolean;
+}
+
+export type { ProactiveInput } from './lib/proactiveEngine';
+export { buildProactiveSignals } from './lib/proactiveEngine';
+
