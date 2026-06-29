@@ -49,16 +49,16 @@ export function Header({
             <div className="mt-1 flex items-center flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] font-bold text-stone-500">
               <span className="flex items-center gap-1">
                 <Package className="h-3 w-3 text-stone-400" />
-                <span>{inventoryLength} réf</span>
+                <span>{inventoryLength} articles</span>
               </span>
-              <span className="flex items-center gap-1">
+              {/* <span className="flex items-center gap-1">
                 <FileText className="h-3 w-3 text-stone-400" />
                 <span>{totalItems} u.</span>
-              </span>
-              <span className="flex items-center gap-1">
+              </span> */}
+              {/* <span className="flex items-center gap-1">
                 <AlertTriangle className={`h-3 w-3 ${lowStockCount > 0 ? "text-amber-500 animate-pulse" : "text-stone-400"}`} />
                 <span className={lowStockCount > 0 ? "text-amber-600 font-bold" : ""}>{lowStockCount} alerte{lowStockCount > 1 ? "s" : ""}</span>
-              </span>
+              </span> */}
             </div>
           </div>
 
