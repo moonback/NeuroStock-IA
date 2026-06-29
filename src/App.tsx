@@ -11,6 +11,7 @@ import { Toast } from "./components/Toast";
 import { ExportModal } from "./components/ExportModal";
 import { ProductDetailsModal } from "./components/ProductDetailsModal";
 import { VectorizeConfirmModal } from "./components/VectorizeConfirmModal";
+import { Onboarding } from "./components/Onboarding";
 import { InventoryItem, ProductLookupData, CategoryItem } from "./types";
 import {
   isSupabaseConfigured,
@@ -112,13 +113,38 @@ function findInventoryItemForAssistant(
 }
 
 export default function App() {
-  const [session, setSession] = useState<UserSession | null>(null);
-  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [session, setSession] = useState<UserSession | null>(() => getSession());
+  const [isSessionLoading, setIsSessionLoading] = useState(false);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => {
+    const s = getSession();
+    if (!s) return true;
+    return typeof window !== 'undefined'
+      ? localStorage.getItem(`neurostock_onboarding_done_${s.id}`) === '1'
+      : true;
+  });
 
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isInventoryLoading, setIsInventoryLoading] = useState(true);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [inventorySource, setInventorySource] = useState<"remote" | "cache">("remote");
+
+  useEffect(() => {
+    const activeSession = getSession();
+    setSession(activeSession);
+    setIsSessionLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setHasSeenOnboarding(true);
+      return;
+    }
+    const key = `neurostock_onboarding_done_${session.id}`;
+    const done = typeof window !== 'undefined'
+      ? localStorage.getItem(key) === '1'
+      : true;
+    setHasSeenOnboarding(done);
+  }, [session]);
 
   const [activeTab, setActiveTab] = useState<AppTab>("scan");
   const [dbCategories, setDbCategories] = useState<CategoryItem[]>([]);
@@ -187,13 +213,6 @@ export default function App() {
   });
 
   const embeddingGenerator = useEmbeddingGenerator(inventory);
-
-  // Check session on mount
-  useEffect(() => {
-    const activeSession = getSession();
-    setSession(activeSession);
-    setIsSessionLoading(false);
-  }, []);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -871,628 +890,633 @@ export default function App() {
   };
 
   return (
-    <GeminiAssistantProvider
-      getContext={() => assistantContext}
-      toolHandlers={{
-        searchProduct: async (args) => {
-          const rawQuery = String(args.query ?? "").trim();
-          const query = normalizeAssistantQuery(rawQuery);
-          if (!query) {
-            throw new Error("Recherche produit vide");
-          }
+    <>
+      <GeminiAssistantProvider
+        getContext={() => assistantContext}
+        toolHandlers={{
+          searchProduct: async (args) => {
+            const rawQuery = String(args.query ?? "");
+            const query = normalizeAssistantQuery(rawQuery);
+            if (!query) {
+              throw new Error("Recherche produit vide");
+            }
 
-          const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
-          if (item) {
-            return {
-              found: true,
-              exact: true,
-              product: item,
-            };
-          }
-
-          if (ambiguousMatches.length > 0) {
-            return {
-              found: false,
-              ambiguous: true,
-              matches: ambiguousMatches.map((match) => ({
-                barcode: match.barcode,
-                name: match.name,
-                brand: match.brand,
-                category: match.category,
-                quantity: match.quantity,
-                purchasePrice: match.purchasePrice,
-                salesPrice: match.salesPrice,
-              })),
-            };
-          }
-
-          const results = inventory
-            .filter((candidate) => {
-              const name = normalizeAssistantQuery(candidate.name);
-              const brand = normalizeAssistantQuery(candidate.brand ?? "");
-              const category = normalizeAssistantQuery(candidate.category ?? "");
-              return (
-                name.includes(query) ||
-                brand.includes(query) ||
-                category.includes(query) ||
-                candidate.barcode.includes(rawQuery)
-              );
-            })
-            .slice(0, 5);
-
-          return {
-            found: results.length > 0,
-            query: rawQuery,
-            results,
-          };
-        },
-        openProductDetails: async (args) => {
-          if (!isMobileViewport()) {
-            return {
-              opened: false,
-              mobileOnly: true,
-              error: "Cette action est disponible uniquement sur mobile.",
-            };
-          }
-
-          const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
-          if (item) {
-            setActionModal({ type: "product_details", product: item });
-            return {
-              opened: true,
-              barcode: item.barcode,
-              name: item.name,
-            };
-          }
-
-          if (ambiguousMatches.length > 0) {
-            return {
-              opened: false,
-              ambiguous: true,
-              matches: ambiguousMatches.map((match) => ({
-                barcode: match.barcode,
-                name: match.name,
-                brand: match.brand,
-                category: match.category,
-              })),
-            };
-          }
-
-          return {
-            opened: false,
-            notFound: true,
-            query: String(args.query ?? args.name ?? args.barcode ?? ""),
-          };
-        },
-        updateStock: async (args) => {
-          const quantity = Number(args.quantity);
-          const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
-
-          if (ambiguousMatches.length > 0) {
-            return {
-              updated: false,
-              ambiguous: true,
-              matches: ambiguousMatches.map((match) => ({
-                barcode: match.barcode,
-                name: match.name,
-                brand: match.brand,
-              })),
-            };
-          }
-
-          if (!item || !Number.isFinite(quantity)) throw new Error("Produit ou quantité invalide");
-
-          await syncItem({ ...item, quantity: Math.max(0, quantity), lastUpdated: Date.now(), lastMovement: quantity - item.quantity });
-          return { barcode: item.barcode, name: item.name, quantity, updated: true };
-        },
-        updateProduct: async (args) => {
-          const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
-
-          if (ambiguousMatches.length > 0) {
-            return {
-              updated: false,
-              ambiguous: true,
-              matches: ambiguousMatches.map((match) => ({
-                barcode: match.barcode,
-                name: match.name,
-                brand: match.brand,
-              })),
-            };
-          }
-
-          if (!item) throw new Error("Produit non trouvé");
-
-          const updatedItem = { ...item, lastUpdated: Date.now() };
-
-          const name = normalizeOptionalText(args.name);
-          const brand = normalizeOptionalText(args.brand);
-          const category = normalizeOptionalText(args.category);
-          const imageUrl = normalizeOptionalText(args.imageUrl);
-          const purchasePrice = Number.isFinite(Number(args.purchasePrice)) ? Math.max(0, Number(args.purchasePrice)) : undefined;
-          const salesPrice = Number.isFinite(Number(args.salesPrice)) ? Math.max(0, Number(args.salesPrice)) : undefined;
-
-          if (name !== undefined) updatedItem.name = name;
-          if (brand !== undefined) updatedItem.brand = brand;
-          if (category !== undefined) updatedItem.category = category;
-          if (imageUrl !== undefined) updatedItem.imageUrl = imageUrl;
-          if (purchasePrice !== undefined) updatedItem.purchasePrice = purchasePrice;
-          if (salesPrice !== undefined) updatedItem.salesPrice = salesPrice;
-
-          // Générer un nouvel embedding si les champs clés ont changé
-          try {
-            const embedding = await generateProductEmbedding(updatedItem);
-            updatedItem.embedding = embedding;
-          } catch (error) {
-            console.error('Failed to generate embedding for update:', error);
-          }
-
-          await syncItem(updatedItem);
-          return { barcode: item.barcode, name: item.name, updated: true };
-        },
-        createProduct: async (args) => {
-          const barcode = normalizeOptionalText(args.barcode);
-          const name = normalizeOptionalText(args.name);
-          const brand = normalizeOptionalText(args.brand);
-          const parsedQuantity = Number(args.quantity);
-          const quantity = Number.isFinite(parsedQuantity) ? Math.max(0, parsedQuantity) : 0;
-
-          if (!barcode && !name) {
-            return {
-              created: false,
-              needsInput: true,
-              missing: ["barcode", "name"],
-              message: "Pour creer un produit, indique un code-barres ou un nom.",
-            };
-          }
-
-          if (!barcode && !brand) {
-            return {
-              created: false,
-              needsInput: true,
-              missing: ["brand"],
-              message: "Sans code-barres, j'ai besoin du nom et de la marque pour chercher sur OpenFoodFacts.",
-            };
-          }
-
-          let resolvedBarcode = barcode;
-          let resolvedLookup: ProductLookupData | null = null;
-
-          if (barcode) {
-            const existingLocalItem = inventory.find((candidate) => candidate.barcode === barcode);
-            const existingStoredItem = existingLocalItem ?? (
-              isSupabaseConfigured
-                ? await fetchInventoryItemWithFallback(barcode)
-                : null
-            );
-
-            if (existingStoredItem) {
+            const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
+            if (item) {
               return {
-                created: false,
-                exists: true,
-                message: `Un produit existe deja pour le code-barres ${barcode}`,
-                product: existingStoredItem,
+                found: true,
+                exact: true,
+                product: item,
               };
             }
 
-            resolvedLookup = await getProductData(barcode);
-            if (!resolvedLookup) {
+            if (ambiguousMatches.length > 0) {
               return {
-                created: false,
-                notFound: true,
-                source: "openfoodfacts",
-                message: `Aucun produit trouve sur OpenFoodFacts pour le code-barres ${barcode}.`,
-              };
-            }
-          } else {
-            const matches = await searchOpenFoodFactsProducts({
-              name: name!,
-              brand: brand!,
-              pageSize: 5,
-            });
-
-            if (!matches.length) {
-              return {
-                created: false,
-                notFound: true,
-                source: "openfoodfacts",
-                message: `Aucun produit OpenFoodFacts trouve pour ${name} ${brand}.`,
-              };
-            }
-
-            if (matches.length > 1) {
-              return {
-                created: false,
+                found: false,
                 ambiguous: true,
-                source: "openfoodfacts",
-                message: "Plusieurs produits correspondent sur OpenFoodFacts.",
-                matches: matches.map((match) => ({
+                matches: ambiguousMatches.map((match) => ({
                   barcode: match.barcode,
-                  name: match.product.name,
-                  brand: match.product.brand,
-                  category: match.product.category,
+                  name: match.name,
+                  brand: match.brand,
+                  category: match.category,
+                  quantity: match.quantity,
+                  purchasePrice: match.purchasePrice,
+                  salesPrice: match.salesPrice,
                 })),
               };
             }
 
-            resolvedBarcode = matches[0].barcode;
-            resolvedLookup = matches[0].product;
+            const results = inventory
+              .filter((candidate) => {
+                const name = normalizeAssistantQuery(candidate.name);
+                const brand = normalizeAssistantQuery(candidate.brand ?? "");
+                const category = normalizeAssistantQuery(candidate.category ?? "");
+                return (
+                  name.includes(query) ||
+                  brand.includes(query) ||
+                  category.includes(query) ||
+                  candidate.barcode.includes(rawQuery)
+                );
+              })
+              .slice(0, 5);
 
-            const existingLocalItem = inventory.find((candidate) => candidate.barcode === resolvedBarcode);
-            const existingStoredItem = existingLocalItem ?? (
-              isSupabaseConfigured
-                ? await fetchInventoryItemWithFallback(resolvedBarcode)
-                : null
-            );
-
-            if (existingStoredItem) {
+            return {
+              found: results.length > 0,
+              query: rawQuery,
+              results,
+            };
+          },
+          openProductDetails: async (args) => {
+            if (!isMobileViewport()) {
               return {
-                created: false,
-                exists: true,
-                message: `Un produit existe deja pour le code-barres ${resolvedBarcode}`,
-                product: existingStoredItem,
+                opened: false,
+                mobileOnly: true,
+                error: "Cette action est disponible uniquement sur mobile.",
               };
             }
-          }
 
-          const resolvedName = name ?? resolvedLookup?.name;
-          if (!resolvedBarcode || !resolvedName) {
-            return {
-              created: false,
-              needsInput: true,
-              missing: ["barcode", "name"],
-              message: "Impossible de creer le produit sans code-barres et nom valides.",
-            };
-          }
-
-          const category =
-            normalizeOptionalText(args.category) ??
-            suggestCategory(resolvedName, resolvedLookup?.category, dbCategories) ??
-            resolvedLookup?.category ??
-            undefined;
-          const item: InventoryItem = {
-            barcode: resolvedBarcode,
-            name: resolvedName,
-            quantity,
-            brand: brand ?? resolvedLookup?.brand,
-            category,
-            imageUrl: normalizeOptionalText(args.imageUrl) ?? resolvedLookup?.imageUrl,
-            purchasePrice: Number.isFinite(Number(args.purchasePrice))
-              ? Math.max(0, Number(args.purchasePrice))
-              : undefined,
-            salesPrice: Number.isFinite(Number(args.salesPrice))
-              ? Math.max(0, Number(args.salesPrice))
-              : undefined,
-            lastMovement: quantity,
-            lastUpdated: Date.now(),
-          };
-
-          // Générer un embedding pour le nouveau produit
-          try {
-            const embedding = await generateProductEmbedding(item);
-            item.embedding = embedding;
-          } catch (error) {
-            console.error('Failed to generate embedding for new product:', error);
-          }
-
-          const queued = await syncItem(item);
-          showToast(queued ? `Produit cree en attente de synchro: ${resolvedName}` : `Produit cree: ${resolvedName}`);
-          return {
-            created: true,
-            queued,
-            source: "openfoodfacts",
-            product: item,
-          };
-        },
-        createCategory: async (args) => {
-          const name = String(args.name ?? "").trim();
-          if (!name) throw new Error("Nom de catégorie requis");
-          const saved = await upsertCategory({ name });
-          setDbCategories((prev) => [saved, ...prev.filter((category) => category.name !== saved.name)]);
-          return saved;
-        },
-        renameCategory: async (args) => {
-          const oldName = String(args.oldName ?? "").trim();
-          const newName = String(args.newName ?? "").trim();
-          const current = dbCategories.find((category) => category.name === oldName);
-          if (!current || !newName) throw new Error("Catégorie invalide");
-          const saved = await upsertCategory({ ...current, name: newName });
-          setDbCategories((prev) => [saved, ...prev.filter((category) => category.id !== saved.id)]);
-          return saved;
-        },
-        deleteProduct: async (args) => {
-          const barcode = String(args.barcode ?? "");
-          await syncDeleteInventoryItem(barcode);
-          setInventory((prev) => prev.filter((item) => item.barcode !== barcode));
-          return { barcode };
-        },
-        exportCSV: () => {
-          handleExport();
-          return { exported: true };
-        },
-        semanticSearchProduct: async (args) => {
-          const query = String(args.query || '');
-          const limit = Number(args.limit) || 5;
-          const results = await fullSemanticSearch(query, inventory, limit);
-          return {
-            success: true,
-            query,
-            results: results.map(({ product, similarity }) => ({
-              barcode: product.barcode,
-              name: product.name,
-              brand: product.brand,
-              category: product.category,
-              quantity: product.quantity,
-              similarity,
-            })),
-          };
-        },
-        regenerateEmbeddings: async (args) => {
-          const barcode = args.barcode ? String(args.barcode) : undefined;
-          const productsToProcess = barcode
-            ? inventory.filter((p) => p.barcode === barcode)
-            : inventory;
-
-          const wasAlreadyGenerating = isGeneratingEmbeddings;
-          if (!wasAlreadyGenerating) {
-            setIsGeneratingEmbeddings(true);
-          }
-
-          const results = [];
-
-          for (const product of productsToProcess) {
-            try {
-              const embedding = await generateProductEmbedding(product);
-              const updatedProduct = { ...product, embedding, lastUpdated: Date.now() };
-              await syncItem(updatedProduct);
-
-              // Mettre à jour l'état local
-              setInventory(prev => prev.map(item =>
-                item.barcode === product.barcode ? updatedProduct : item
-              ));
-
-              results.push({ barcode: product.barcode, name: product.name, success: true });
-            } catch (error) {
-              console.error(`Failed to generate embedding for ${product.name}:`, error);
-              results.push({ barcode: product.barcode, name: product.name, success: false, error: String(error) });
+            const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
+            if (item) {
+              setActionModal({ type: "product_details", product: item });
+              return {
+                opened: true,
+                barcode: item.barcode,
+                name: item.name,
+              };
             }
-          }
 
-          if (!wasAlreadyGenerating) {
-            setIsGeneratingEmbeddings(false);
-          }
+            if (ambiguousMatches.length > 0) {
+              return {
+                opened: false,
+                ambiguous: true,
+                matches: ambiguousMatches.map((match) => ({
+                  barcode: match.barcode,
+                  name: match.name,
+                  brand: match.brand,
+                  category: match.category,
+                })),
+              };
+            }
 
-          return {
-            processed: productsToProcess.length,
-            success: results.filter((r) => r.success).length,
-            failed: results.filter((r) => !r.success).length,
-            results,
-          };
-        },
-      }}
-    >
-      <div className="app-shell text-stone-800 font-sans">
-        <Header
-          email={session.email}
-          inventoryLength={inventory.length}
-          totalItems={totalItems}
-          lowStockCount={lowStockCount}
-          showExport={inventory.length > 0}
-          isOnline={isOnline}
-          pendingCount={pendingCount}
-          isSyncing={isSyncing}
-          onExport={() => setShowExportModal(true)}
-          onLogout={handleLogout}
-          onSyncNow={() => void flushQueue()}
-          onRequestVectorize={() => setShowVectorizeConfirm(true)}
-          embeddingGenerator={embeddingGenerator}
-        />
+            return {
+              opened: false,
+              notFound: true,
+              query: String(args.query ?? args.name ?? args.barcode ?? ""),
+            };
+          },
+          updateStock: async (args) => {
+            const quantity = Number(args.quantity);
+            const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
 
-        <main className="app-main space-y-3 sm:space-y-4">
+            if (ambiguousMatches.length > 0) {
+              return {
+                updated: false,
+                ambiguous: true,
+                matches: ambiguousMatches.map((match) => ({
+                  barcode: match.barcode,
+                  name: match.name,
+                  brand: match.brand,
+                })),
+              };
+            }
 
-          <SyncNotice
-            syncError={syncError}
-            inventorySource={inventorySource}
+            if (!item || !Number.isFinite(quantity)) throw new Error("Produit ou quantité invalide");
+
+            await syncItem({ ...item, quantity: Math.max(0, quantity), lastUpdated: Date.now(), lastMovement: quantity - item.quantity });
+            return { barcode: item.barcode, name: item.name, quantity, updated: true };
+          },
+          updateProduct: async (args) => {
+            const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
+
+            if (ambiguousMatches.length > 0) {
+              return {
+                updated: false,
+                ambiguous: true,
+                matches: ambiguousMatches.map((match) => ({
+                  barcode: match.barcode,
+                  name: match.name,
+                  brand: match.brand,
+                })),
+              };
+            }
+
+            if (!item) throw new Error("Produit non trouvé");
+
+            const updatedItem = { ...item, lastUpdated: Date.now() };
+
+            const name = normalizeOptionalText(args.name);
+            const brand = normalizeOptionalText(args.brand);
+            const category = normalizeOptionalText(args.category);
+            const imageUrl = normalizeOptionalText(args.imageUrl);
+            const purchasePrice = Number.isFinite(Number(args.purchasePrice)) ? Math.max(0, Number(args.purchasePrice)) : undefined;
+            const salesPrice = Number.isFinite(Number(args.salesPrice)) ? Math.max(0, Number(args.salesPrice)) : undefined;
+
+            if (name !== undefined) updatedItem.name = name;
+            if (brand !== undefined) updatedItem.brand = brand;
+            if (category !== undefined) updatedItem.category = category;
+            if (imageUrl !== undefined) updatedItem.imageUrl = imageUrl;
+            if (purchasePrice !== undefined) updatedItem.purchasePrice = purchasePrice;
+            if (salesPrice !== undefined) updatedItem.salesPrice = salesPrice;
+
+            // Générer un nouvel embedding si les champs clés ont changé
+            try {
+              const embedding = await generateProductEmbedding(updatedItem);
+              updatedItem.embedding = embedding;
+            } catch (error) {
+              console.error('Failed to generate embedding for update:', error);
+            }
+
+            await syncItem(updatedItem);
+            return { barcode: item.barcode, name: item.name, updated: true };
+          },
+          createProduct: async (args) => {
+            const barcode = normalizeOptionalText(args.barcode);
+            const name = normalizeOptionalText(args.name);
+            const brand = normalizeOptionalText(args.brand);
+            const parsedQuantity = Number(args.quantity);
+            const quantity = Number.isFinite(parsedQuantity) ? Math.max(0, parsedQuantity) : 0;
+
+            if (!barcode && !name) {
+              return {
+                created: false,
+                needsInput: true,
+                missing: ["barcode", "name"],
+                message: "Pour creer un produit, indique un code-barres ou un nom.",
+              };
+            }
+
+            if (!barcode && !brand) {
+              return {
+                created: false,
+                needsInput: true,
+                missing: ["brand"],
+                message: "Sans code-barres, j'ai besoin du nom et de la marque pour chercher sur OpenFoodFacts.",
+              };
+            }
+
+            let resolvedBarcode = barcode;
+            let resolvedLookup: ProductLookupData | null = null;
+
+            if (barcode) {
+              const existingLocalItem = inventory.find((candidate) => candidate.barcode === barcode);
+              const existingStoredItem = existingLocalItem ?? (
+                isSupabaseConfigured
+                  ? await fetchInventoryItemWithFallback(barcode)
+                  : null
+              );
+
+              if (existingStoredItem) {
+                return {
+                  created: false,
+                  exists: true,
+                  message: `Un produit existe deja pour le code-barres ${barcode}`,
+                  product: existingStoredItem,
+                };
+              }
+
+              resolvedLookup = await getProductData(barcode);
+              if (!resolvedLookup) {
+                return {
+                  created: false,
+                  notFound: true,
+                  source: "openfoodfacts",
+                  message: `Aucun produit trouve sur OpenFoodFacts pour le code-barres ${barcode}.`,
+                };
+              }
+            } else {
+              const matches = await searchOpenFoodFactsProducts({
+                name: name!,
+                brand: brand!,
+                pageSize: 5,
+              });
+
+              if (!matches.length) {
+                return {
+                  created: false,
+                  notFound: true,
+                  source: "openfoodfacts",
+                  message: `Aucun produit OpenFoodFacts trouve pour ${name} ${brand}.`,
+                };
+              }
+
+              if (matches.length > 1) {
+                return {
+                  created: false,
+                  ambiguous: true,
+                  source: "openfoodfacts",
+                  message: "Plusieurs produits correspondent sur OpenFoodFacts.",
+                  matches: matches.map((match) => ({
+                    barcode: match.barcode,
+                    name: match.product.name,
+                    brand: match.product.brand,
+                    category: match.product.category,
+                  })),
+                };
+              }
+
+              resolvedBarcode = matches[0].barcode;
+              resolvedLookup = matches[0].product;
+
+              const existingLocalItem = inventory.find((candidate) => candidate.barcode === resolvedBarcode);
+              const existingStoredItem = existingLocalItem ?? (
+                isSupabaseConfigured
+                  ? await fetchInventoryItemWithFallback(resolvedBarcode)
+                  : null
+              );
+
+              if (existingStoredItem) {
+                return {
+                  created: false,
+                  exists: true,
+                  message: `Un produit existe deja pour le code-barres ${resolvedBarcode}`,
+                  product: existingStoredItem,
+                };
+              }
+            }
+
+            const resolvedName = name ?? resolvedLookup?.name;
+            if (!resolvedBarcode || !resolvedName) {
+              return {
+                created: false,
+                needsInput: true,
+                missing: ["barcode", "name"],
+                message: "Impossible de creer le produit sans code-barres et nom valides.",
+              };
+            }
+
+            const category =
+              normalizeOptionalText(args.category) ??
+              suggestCategory(resolvedName, resolvedLookup?.category, dbCategories) ??
+              resolvedLookup?.category ??
+              undefined;
+            const item: InventoryItem = {
+              barcode: resolvedBarcode,
+              name: resolvedName,
+              quantity,
+              brand: brand ?? resolvedLookup?.brand,
+              category,
+              imageUrl: normalizeOptionalText(args.imageUrl) ?? resolvedLookup?.imageUrl,
+              purchasePrice: Number.isFinite(Number(args.purchasePrice))
+                ? Math.max(0, Number(args.purchasePrice))
+                : undefined,
+              salesPrice: Number.isFinite(Number(args.salesPrice))
+                ? Math.max(0, Number(args.salesPrice))
+                : undefined,
+              lastMovement: quantity,
+              lastUpdated: Date.now(),
+            };
+
+            // Générer un embedding pour le nouveau produit
+            try {
+              const embedding = await generateProductEmbedding(item);
+              item.embedding = embedding;
+            } catch (error) {
+              console.error('Failed to generate embedding for new product:', error);
+            }
+
+            const queued = await syncItem(item);
+            showToast(queued ? `Produit cree en attente de synchro: ${resolvedName}` : `Produit cree: ${resolvedName}`);
+            return {
+              created: true,
+              queued,
+              source: "openfoodfacts",
+              product: item,
+            };
+          },
+          createCategory: async (args) => {
+            const name = String(args.name ?? "").trim();
+            if (!name) throw new Error("Nom de catégorie requis");
+            const saved = await upsertCategory({ name });
+            setDbCategories((prev) => [saved, ...prev.filter((category) => category.name !== saved.name)]);
+            return saved;
+          },
+          renameCategory: async (args) => {
+            const oldName = String(args.oldName ?? "").trim();
+            const newName = String(args.newName ?? "").trim();
+            const current = dbCategories.find((category) => category.name === oldName);
+            if (!current || !newName) throw new Error("Catégorie invalide");
+            const saved = await upsertCategory({ ...current, name: newName });
+            setDbCategories((prev) => [saved, ...prev.filter((category) => category.id !== saved.id)]);
+            return saved;
+          },
+          deleteProduct: async (args) => {
+            const barcode = String(args.barcode ?? "");
+            await syncDeleteInventoryItem(barcode);
+            setInventory((prev) => prev.filter((item) => item.barcode !== barcode));
+            return { barcode };
+          },
+          exportCSV: () => {
+            handleExport();
+            return { exported: true };
+          },
+          semanticSearchProduct: async (args) => {
+            const query = String(args.query || '');
+            const limit = Number(args.limit) || 5;
+            const results = await fullSemanticSearch(query, inventory, limit);
+            return {
+              success: true,
+              query,
+              results: results.map(({ product, similarity }) => ({
+                barcode: product.barcode,
+                name: product.name,
+                brand: product.brand,
+                category: product.category,
+                quantity: product.quantity,
+                similarity,
+              })),
+            };
+          },
+          regenerateEmbeddings: async (args) => {
+            const barcode = args.barcode ? String(args.barcode) : undefined;
+            const productsToProcess = barcode
+              ? inventory.filter((p) => p.barcode === barcode)
+              : inventory;
+
+            const wasAlreadyGenerating = isGeneratingEmbeddings;
+            if (!wasAlreadyGenerating) {
+              setIsGeneratingEmbeddings(true);
+            }
+
+            const results = [];
+
+            for (const product of productsToProcess) {
+              try {
+                const embedding = await generateProductEmbedding(product);
+                const updatedProduct = { ...product, embedding, lastUpdated: Date.now() };
+                await syncItem(updatedProduct);
+
+                // Mettre à jour l'état local
+                setInventory(prev => prev.map(item =>
+                  item.barcode === product.barcode ? updatedProduct : item
+                ));
+
+                results.push({ barcode: product.barcode, name: product.name, success: true });
+              } catch (error) {
+                console.error(`Failed to generate embedding for ${product.name}:`, error);
+                results.push({ barcode: product.barcode, name: product.name, success: false, error: String(error) });
+              }
+            }
+
+            if (!wasAlreadyGenerating) {
+              setIsGeneratingEmbeddings(false);
+            }
+
+            return {
+              processed: productsToProcess.length,
+              success: results.filter((r) => r.success).length,
+              failed: results.filter((r) => !r.success).length,
+              results,
+            };
+          },
+        }}
+      >
+        <div className="app-shell text-stone-800 font-sans">
+          <Header
+            email={session.email}
+            inventoryLength={inventory.length}
+            totalItems={totalItems}
+            lowStockCount={lowStockCount}
+            showExport={inventory.length > 0}
             isOnline={isOnline}
             pendingCount={pendingCount}
+            isSyncing={isSyncing}
+            onExport={() => setShowExportModal(true)}
+            onLogout={handleLogout}
+            onSyncNow={() => void flushQueue()}
+            onRequestVectorize={() => setShowVectorizeConfirm(true)}
+            embeddingGenerator={embeddingGenerator}
           />
 
-          {/* Content Tabs */}
-          {activeTab === "scan" ? (
-            <ScanTab
+          <main className="app-main space-y-3 sm:space-y-4">
+
+            <SyncNotice
+              syncError={syncError}
+              inventorySource={inventorySource}
               isOnline={isOnline}
               pendingCount={pendingCount}
-              syncError={syncError}
-              loadingBarcode={loadingBarcode}
-              actionModal={actionModal}
-              scannerInputMode={scannerInputMode}
-              recentlyScanned={recentlyScanned}
-              onScannerInputModeChange={setScannerInputMode}
-              onScan={handleScan}
-              onEditProduct={(item) => setActionModal({ type: "edit", product: item })}
-              onEditQuantity={(item) =>
-                setActionModal({
+            />
+
+            {/* Content Tabs */}
+            {activeTab === "scan" ? (
+              <ScanTab
+                isOnline={isOnline}
+                pendingCount={pendingCount}
+                syncError={syncError}
+                loadingBarcode={loadingBarcode}
+                actionModal={actionModal}
+                scannerInputMode={scannerInputMode}
+                recentlyScanned={recentlyScanned}
+                onScannerInputModeChange={setScannerInputMode}
+                onScan={handleScan}
+                onEditProduct={(item) => setActionModal({ type: "edit", product: item })}
+                onEditQuantity={(item) =>
+                  setActionModal({
+                    type: "quantity",
+                    product: item,
+                    existingQty: item.quantity,
+                    isNew: false,
+                  })
+                }
+                onUpdateQuantity={handleUpdateQuantity}
+              />
+            ) : activeTab === "autoScan" ? (
+              <AutomaticScanPanel
+                enabled={isBatchMode}
+                mode={stockScanMode}
+                loadingBarcode={loadingBarcode}
+                isOnline={isOnline}
+                pendingCount={pendingCount}
+                syncError={syncError}
+                onEnabledChange={setIsBatchMode}
+                onModeChange={setStockScanMode}
+                scannerInputMode={scannerInputMode}
+                onScannerInputModeChange={setScannerInputMode}
+                onScan={handleScan}
+              />
+            ) : activeTab === "stock" ? (
+              <StockTab
+                inventoryLength={inventory.length}
+                filteredInventory={filteredInventory}
+                categories={categories}
+                categoryOptions={categoryOptions}
+                dbCategories={dbCategories}
+                financialStats={financialStats}
+                searchTerm={searchTerm}
+                selectedCategory={selectedCategory}
+                stockFilter={stockFilter}
+                sortBy={sortBy}
+                showFilters={showFilters}
+                hasActiveFilters={hasActiveFilters}
+                isInventoryLoading={isInventoryLoading}
+                onSearchTermChange={setSearchTerm}
+                onSelectedCategoryChange={setSelectedCategory}
+                onStockFilterChange={setStockFilter}
+                onSortByChange={setSortBy}
+                onShowFiltersChange={setShowFilters}
+                onShowCategoryModal={() => setShowCategoryModal(true)}
+                onResetFilters={resetFilters}
+                onUpdateQuantity={handleUpdateQuantity}
+                onRemove={handleRemoveItem}
+                onEditQuantity={(item) => setActionModal({
                   type: "quantity",
                   product: item,
                   existingQty: item.quantity,
                   isNew: false,
-                })
-              }
-              onUpdateQuantity={handleUpdateQuantity}
-            />
-          ) : activeTab === "autoScan" ? (
-            <AutomaticScanPanel
-              enabled={isBatchMode}
-              mode={stockScanMode}
-              loadingBarcode={loadingBarcode}
-              isOnline={isOnline}
-              pendingCount={pendingCount}
-              syncError={syncError}
-              onEnabledChange={setIsBatchMode}
-              onModeChange={setStockScanMode}
-              scannerInputMode={scannerInputMode}
-              onScannerInputModeChange={setScannerInputMode}
-              onScan={handleScan}
-            />
-          ) : activeTab === "stock" ? (
-            <StockTab
+                })}
+                onEditProduct={(item) => setActionModal({
+                  type: "edit",
+                  product: item,
+                })}
+                onOpenScan={() => setActiveTab("scan")}
+              />
+            ) : (
+              <CategoriesManager
+                categories={dbCategories}
+                inventory={inventory}
+                onRefreshCategories={loadCategories}
+                onRefreshInventory={loadInventoryOnly}
+                showToast={showToast}
+              />
+            )}
+          </main>
+
+          <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+
+          {showCategoryModal && (
+            <CategoryFilterModal
               inventoryLength={inventory.length}
-              filteredInventory={filteredInventory}
-              categories={categories}
-              categoryOptions={categoryOptions}
-              dbCategories={dbCategories}
-              financialStats={financialStats}
-              searchTerm={searchTerm}
               selectedCategory={selectedCategory}
-              stockFilter={stockFilter}
-              sortBy={sortBy}
-              showFilters={showFilters}
-              hasActiveFilters={hasActiveFilters}
-              isInventoryLoading={isInventoryLoading}
-              onSearchTermChange={setSearchTerm}
-              onSelectedCategoryChange={setSelectedCategory}
-              onStockFilterChange={setStockFilter}
-              onSortByChange={setSortBy}
-              onShowFiltersChange={setShowFilters}
-              onShowCategoryModal={() => setShowCategoryModal(true)}
-              onResetFilters={resetFilters}
-              onUpdateQuantity={handleUpdateQuantity}
-              onRemove={handleRemoveItem}
-              onEditQuantity={(item) => setActionModal({
-                type: "quantity",
-                product: item,
-                existingQty: item.quantity,
-                isNew: false,
-              })}
-              onEditProduct={(item) => setActionModal({
-                type: "edit",
-                product: item,
-              })}
-              onOpenScan={() => setActiveTab("scan")}
-            />
-          ) : (
-            <CategoriesManager
-              categories={dbCategories}
-              inventory={inventory}
-              onRefreshCategories={loadCategories}
-              onRefreshInventory={loadInventoryOnly}
-              showToast={showToast}
+              categoryOptions={categoryOptions}
+              onSelectCategory={setSelectedCategory}
+              onClose={() => setShowCategoryModal(false)}
             />
           )}
-        </main>
 
-        <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          {showExportModal && (
+            <ExportModal
+              items={inventory}
+              categories={dbCategories}
+              onClose={() => setShowExportModal(false)}
+              onImport={async () => {
+                const result = await loadInventoryItems();
+                setInventory(result.items);
+                setInventorySource(result.source);
+              }}
+            />
+          )}
 
-        {showCategoryModal && (
-          <CategoryFilterModal
-            inventoryLength={inventory.length}
-            selectedCategory={selectedCategory}
-            categoryOptions={categoryOptions}
-            onSelectCategory={setSelectedCategory}
-            onClose={() => setShowCategoryModal(false)}
-          />
-        )}
+          {showVectorizeConfirm && (
+            <VectorizeConfirmModal
+              open={showVectorizeConfirm}
+              inventoryLength={inventory.length}
+              productsToVectorize={Math.max(0, inventory.length - embeddingGenerator.embeddedCount)}
+              isRunning={embeddingGenerator.isRunning}
+              isPaused={embeddingGenerator.isPaused}
+              onConfirm={() => {
+                setShowVectorizeConfirm(false);
+                embeddingGenerator.start();
+              }}
+              onCancel={() => setShowVectorizeConfirm(false)}
+              onResume={embeddingGenerator.resume}
+              onPause={embeddingGenerator.pause}
+              onStop={embeddingGenerator.stop}
+            />
+          )}
 
-        {showExportModal && (
-          <ExportModal
-            items={inventory}
-            categories={dbCategories}
-            onClose={() => setShowExportModal(false)}
-            onImport={async () => {
-              const result = await loadInventoryItems();
-              setInventory(result.items);
-              setInventorySource(result.source);
-            }}
-          />
-        )}
+          {/* Modals & toast */}
+          {actionModal?.type === "manual" && (
+            <ManualProductModal
+              barcode={actionModal.barcode}
+              categories={dbCategories}
+              onSave={handleManualProductSave}
+              onCancel={() => setActionModal(null)}
+            />
+          )}
+          {actionModal?.type === "scan_choice" && (
+            <ScanChoiceModal
+              product={actionModal.product}
+              onChooseStock={() =>
+                setActionModal({
+                  type: "quantity",
+                  product: actionModal.product,
+                  existingQty: actionModal.product.quantity,
+                  isNew: false,
+                })
+              }
+              onChooseEdit={() =>
+                setActionModal({
+                  type: "edit",
+                  product: actionModal.product,
+                })
+              }
+              onCancel={() => setActionModal(null)}
+            />
+          )}
+          {actionModal?.type === "edit" && (
+            <ManualProductModal
+              barcode={actionModal.product.barcode}
+              categories={dbCategories}
+              initialValues={actionModal.product}
+              onSave={handleProductUpdateSave}
+              onCancel={() => setActionModal(null)}
+            />
+          )}
+          {actionModal?.type === "product_details" && (
+            <ProductDetailsModal
+              product={actionModal.product}
+              onClose={() => setActionModal(null)}
+              onEditStock={() =>
+                setActionModal({
+                  type: "quantity",
+                  product: actionModal.product,
+                  existingQty: actionModal.product.quantity,
+                  isNew: false,
+                })
+              }
+              onEdit={() =>
+                setActionModal({
+                  type: "edit",
+                  product: actionModal.product,
+                })
+              }
+            />
+          )}
 
-        {showVectorizeConfirm && (
-          <VectorizeConfirmModal
-            open={showVectorizeConfirm}
-            inventoryLength={inventory.length}
-            productsToVectorize={Math.max(0, inventory.length - embeddingGenerator.embeddedCount)}
-            isRunning={embeddingGenerator.isRunning}
-            isPaused={embeddingGenerator.isPaused}
-            onConfirm={() => {
-              setShowVectorizeConfirm(false);
-              embeddingGenerator.start();
-            }}
-            onCancel={() => setShowVectorizeConfirm(false)}
-            onResume={embeddingGenerator.resume}
-            onPause={embeddingGenerator.pause}
-            onStop={embeddingGenerator.stop}
-          />
-        )}
-
-        {/* Modals & toast */}
-        {actionModal?.type === "manual" && (
-          <ManualProductModal
-            barcode={actionModal.barcode}
-            categories={dbCategories}
-            onSave={handleManualProductSave}
-            onCancel={() => setActionModal(null)}
-          />
-        )}
-        {actionModal?.type === "scan_choice" && (
-          <ScanChoiceModal
-            product={actionModal.product}
-            onChooseStock={() =>
-              setActionModal({
-                type: "quantity",
-                product: actionModal.product,
-                existingQty: actionModal.product.quantity,
-                isNew: false,
-              })
-            }
-            onChooseEdit={() =>
-              setActionModal({
-                type: "edit",
-                product: actionModal.product,
-              })
-            }
-            onCancel={() => setActionModal(null)}
-          />
-        )}
-        {actionModal?.type === "edit" && (
-          <ManualProductModal
-            barcode={actionModal.product.barcode}
-            categories={dbCategories}
-            initialValues={actionModal.product}
-            onSave={handleProductUpdateSave}
-            onCancel={() => setActionModal(null)}
-          />
-        )}
-        {actionModal?.type === "product_details" && (
-          <ProductDetailsModal
-            product={actionModal.product}
-            onClose={() => setActionModal(null)}
-            onEditStock={() =>
-              setActionModal({
-                type: "quantity",
-                product: actionModal.product,
-                existingQty: actionModal.product.quantity,
-                isNew: false,
-              })
-            }
-            onEdit={() =>
-              setActionModal({
-                type: "edit",
-                product: actionModal.product,
-              })
-            }
-          />
-        )}
-
-        {actionModal?.type === "quantity" && (
-          <QuantityModal
-            product={actionModal.product}
-            existingQty={actionModal.existingQty}
-            isNew={actionModal.isNew}
-            onSave={handleQuantitySave}
-            onCancel={() => setActionModal(null)}
-          />
-        )}
-        <Toast message={toastMessage?.text || null} visible={!!toastMessage} />
-      </div>
-    </GeminiAssistantProvider>
+          {actionModal?.type === "quantity" && (
+            <QuantityModal
+              product={actionModal.product}
+              existingQty={actionModal.existingQty}
+              isNew={actionModal.isNew}
+              onSave={handleQuantitySave}
+              onCancel={() => setActionModal(null)}
+            />
+          )}
+          <Toast message={toastMessage?.text || null} visible={!!toastMessage} />
+        </div>
+      </GeminiAssistantProvider>
+      {!hasSeenOnboarding && session && (
+        <Onboarding userId={session.id} onComplete={() => setHasSeenOnboarding(true)} />
+      )}
+    </>
   );
 }
