@@ -33,7 +33,7 @@
 | Gestion catégories CRUD | ✅ | `CategoriesManager`, `supabaseCategories.ts` |
 | Auto-catégorisation | ✅ | `autoCategorization.ts` (OFF) |
 | Recherche sémantique | ✅ | `embeddingService.ts` (OpenRouter + fallback) |
-| Assistant vocal "Julien" | ✅ | Gemini Live + tools métiers |
+| Assistant vocal "Lina" | ✅ | Gemini Live + tools métiers |
 | Contrôle embedding batch | ✅ | Header : start/pause/stop + progression |
 | PWA installable | ✅ | manifest + Vite PWA ready |
 | Interface mobile-first | ✅ | Tailwind v4 + glassmorphism + haptiques |

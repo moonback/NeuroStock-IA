@@ -861,7 +861,7 @@ export default function App() {
     language: "français",
     offlineMode: !isOnline,
     businessRules: [
-      "Tu es Julien",
+      "Tu es Lina",
       "Assistant vocal d’inventaire",
       "Tu réponds en français",
       "Réponses courtes",

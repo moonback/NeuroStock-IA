@@ -35,9 +35,8 @@ export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
             <button
               key={tab}
               onClick={() => onTabChange(tab)}
-              className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 transition select-none tap-active ${
-                isActive ? "text-indigo-600" : "text-stone-400 hover:text-stone-700"
-              }`}
+              className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 transition select-none tap-active ${isActive ? "text-indigo-600" : "text-stone-400 hover:text-stone-700"
+                }`}
             >
               <div className={`p-1.5 rounded-xl transition-colors duration-200 ${isActive ? "bg-indigo-50/70" : ""}`}>
                 <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : "stroke-[2]"}`} />
@@ -50,15 +49,14 @@ export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
         <button
           type="button"
           onClick={() => void assistant.open()}
-          className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 transition select-none tap-active ${
-            isAssistantActive ? "text-violet-650" : "text-stone-400 hover:text-stone-700"
-          }`}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 transition select-none tap-active ${isAssistantActive ? "text-violet-650" : "text-stone-400 hover:text-stone-700"
+            }`}
           aria-label="Ouvrir l’assistant vocal"
         >
           <div className={`p-1.5 rounded-xl transition-colors duration-200 ${isAssistantActive ? "bg-violet-50" : ""}`}>
             <Bot className={`w-5 h-5 ${isAssistantActive ? "stroke-[2.5]" : "stroke-[2]"}`} />
           </div>
-          <span className="text-[10px] font-bold tracking-wide">Julien</span>
+          <span className="text-[10px] font-bold tracking-wide">Lina</span>
         </button>
       </div>
     </nav>

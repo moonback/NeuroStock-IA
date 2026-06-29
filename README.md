@@ -18,7 +18,7 @@ Pensée pour le scan code-barres, la synchronisation temps réel et le pilotage 
 ## 🚀 Pourquoi NeuroStock ?
 
 - ⚡ **Scan en 1 geste** — compatibilité douchettes USB/Bluetooth + caméra.
-- 🎙️ **Assistant vocal "Julien"** — reconnaissance vocale et réponse audio temps réel avec Gemini Live.
+- 🎙️ **Assistant vocal "Lina"** — reconnaissance vocale et réponse audio temps réel avec Gemini Live.
 - 🧠 **Recherche sémantique** — vectorisation des produits via embeddings OpenRouter.
 - 📴 **Mode hors-ligne robuste** — stockage local + file d'attente de synchronisation.
 - 📊 **Vue action** — filtres dynamiques, alertes stock bas, tri intelligent.
@@ -156,7 +156,7 @@ Accès local : `http://localhost:3000`
 
 ## 🧠 Guide rapide — Assistant vocal
 
-1. Taper sur l'onglet **Julien** dans la navigation basse.
+1. Taper sur l'onglet **Lina** dans la navigation basse.
 2. Autoriser le microphone.
 3. Parler naturellement en français.
 4. Confirmer les actions sensibles quand l'interface le demande.

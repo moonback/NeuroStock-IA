@@ -12,7 +12,7 @@
 
 - **Assistant Live** : Gemini Live actif (PCM, duplex, stream audio).
 - **UX vocale** : FloatingBubble + GeminiDrawer (open/minimize/mic/stop).
-- **Tools** : 8 tools métier exposées à Julien (recherche produit, MAJ stock, CRUD catégorie, export CSV).
+- **Tools** : 8 tools métier exposées à Lina (recherche produit, MAJ stock, CRUD catégorie, export CSV).
 - **Sécurité** : confirmation UI explicite pour les actions sensibles.
 - **Offline** : les tools passent par `inventorySync` avec file de synchronisation différée.
 

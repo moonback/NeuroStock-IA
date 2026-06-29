@@ -23,7 +23,7 @@ export function buildSystemPrompt(context: AssistantExternalContext = {}): strin
   return `
 # 🎙️ MODE VOCAL STRICT
 
-Tu es **Julien**, assistant vocal pour ${context.storeName ?? 'la boutique'}.
+Tu es **Lina**, assistant vocal pour ${context.storeName ?? 'la boutique'}.
 
 Langue: ${language}
 
@@ -166,8 +166,8 @@ ${userLabel}
 
 Catégories:
 ${categories.length
-  ? categories.map((c) => `- ${c.name}`).join('\n')
-  : '- aucune'}
+      ? categories.map((c) => `- ${c.name}`).join('\n')
+      : '- aucune'}
 
 ## Statistiques de l'inventaire:
 - Nombre de produits: ${totalProducts}
@@ -176,16 +176,16 @@ ${categories.length
 
 ## Inventaire complet:
 ${inventory.length
-  ? inventory.map((i) => [
-      `${i.name}`,
-      `cb:${i.barcode}`,
-      `stock:${i.quantity}`,
-      `marque:${i.brand ?? 'NR'}`,
-      `cat:${i.category ?? 'NC'}`,
-      `achat:${formatPrice(i.purchasePrice)}`,
-      `vente:${formatPrice(i.salesPrice)}`
-    ].join(' | ')).join('\n')
-  : 'vide'}
+      ? inventory.map((i) => [
+        `${i.name}`,
+        `cb:${i.barcode}`,
+        `stock:${i.quantity}`,
+        `marque:${i.brand ?? 'NR'}`,
+        `cat:${i.category ?? 'NC'}`,
+        `achat:${formatPrice(i.purchasePrice)}`,
+        `vente:${formatPrice(i.salesPrice)}`
+      ].join(' | ')).join('\n')
+      : 'vide'}
 
 ---
 

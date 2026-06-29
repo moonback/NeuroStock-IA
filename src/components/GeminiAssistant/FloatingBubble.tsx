@@ -98,7 +98,7 @@ export function FloatingBubble({ state, onExpand }: FloatingBubbleProps) {
         return {
           bg: 'bg-indigo-600',
           ring: 'shadow-indigo-500/30',
-          label: 'Julien',
+          label: 'Lina',
           icon: <Mic className="h-4 w-4" />,
           pulse: false,
           pingColor: 'bg-indigo-400',

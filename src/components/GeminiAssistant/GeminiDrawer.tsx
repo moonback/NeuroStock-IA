@@ -43,7 +43,7 @@ const STATE_META: Record<
   },
   [AssistantState.Speaking]: {
     label: 'Répond',
-    sub: 'Julien vous répond…',
+    sub: 'Lina vous répond…',
     accent: 'bg-indigo-600 shadow-indigo-600/20',
     icon: <Volume2 className="h-8 w-8" />,
     wave: true,
@@ -146,11 +146,10 @@ export function GeminiDrawer({
             <button
               type="button"
               onClick={() => setAutoAccept(!autoAccept)}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold transition cursor-pointer select-none ${
-                autoAccept
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold transition cursor-pointer select-none ${autoAccept
                   ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                   : 'bg-stone-100 text-stone-500 border border-stone-200'
-              }`}
+                }`}
             >
               {autoAccept && <Check className="h-3 w-3 stroke-[3]" />}
               Auto-valide
@@ -226,11 +225,10 @@ export function GeminiDrawer({
           <button
             type="button"
             onClick={onMuteToggle}
-            className={`flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold border transition active:scale-[0.98] cursor-pointer select-none ${
-              isMuted
+            className={`flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold border transition active:scale-[0.98] cursor-pointer select-none ${isMuted
                 ? 'bg-amber-50 border-amber-200 text-amber-700'
                 : 'bg-white border-stone-200/80 text-stone-600 hover:text-stone-900'
-            }`}
+              }`}
           >
             {isMuted ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
             {isMuted ? 'Reprendre' : 'Couper micro'}
