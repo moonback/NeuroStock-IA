@@ -5,6 +5,7 @@ export const tools: ToolDefinition[] = [
   { name: 'semanticSearchProduct', description: 'Recherche semantique de produits (comprend le sens, pas seulement les mots)', parameters: { type: 'object', properties: { query: { type: 'string' }, limit: { type: 'number' } }, required: ['query'] } },
   { name: 'regenerateEmbeddings', description: 'Regenerer les embeddings pour tous les produits ou un produit specifique', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' } } } },
   { name: 'openProductDetails', description: "Ouvrir la fiche detaillee mobile d'un produit present dans l'inventaire", parameters: { type: 'object', properties: { query: { type: 'string' }, barcode: { type: 'string' } } } },
+  { name: 'lookupProductContext', description: "Recuperer le contexte complet d'un produit (stock, prix, derniers mouvements) depuis l'inventaire courant", parameters: { type: 'object', properties: { barcode: { type: 'string' }, query: { type: 'string' } } } },
   { name: 'updateStock', description: 'Modifier un stock', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' }, query: { type: 'string' }, name: { type: 'string' }, quantity: { type: 'number' } }, required: ['quantity'] } },
   {
     name: 'updateProduct',

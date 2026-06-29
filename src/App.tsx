@@ -179,6 +179,21 @@ export default function App() {
     }, 3000);
   }, []);
 
+  const autoEmbed = useCallback(
+    async (item: InventoryItem) => {
+      try {
+        const embedding = await generateProductEmbedding(item);
+        const updated = { ...item, embedding, lastUpdated: Date.now() };
+        await syncItem(updated);
+        setInventory((prev) =>
+          prev.map((existing) => (existing.barcode === item.barcode ? updated : existing)),
+        );
+      } catch (error) {
+        console.error("Auto-embed failed:", error);
+      }
+    },
+    [],
+  );
 
 
   const handleOfflineFlushComplete = useCallback(
@@ -984,6 +999,45 @@ export default function App() {
               query: String(args.query ?? args.name ?? args.barcode ?? ""),
             };
           },
+          lookupProductContext: async (args) => {
+            const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
+
+            if (ambiguousMatches.length > 0) {
+              return {
+                found: false,
+                ambiguous: true,
+                matches: ambiguousMatches.map((match) => ({
+                  barcode: match.barcode,
+                  name: match.name,
+                  brand: match.brand,
+                  category: match.category,
+                })),
+              };
+            }
+
+            if (!item) {
+              return {
+                found: false,
+                notFound: true,
+                query: String(args.query ?? args.name ?? args.barcode ?? ""),
+              };
+            }
+
+            return {
+              found: true,
+              product: {
+                barcode: item.barcode,
+                name: item.name,
+                quantity: item.quantity,
+                category: item.category,
+                brand: item.brand,
+                purchasePrice: item.purchasePrice,
+                salesPrice: item.salesPrice,
+                lastMovement: item.lastMovement,
+                lastUpdated: item.lastUpdated,
+              },
+            };
+          },
           updateStock: async (args) => {
             const quantity = Number(args.quantity);
             const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
@@ -1038,13 +1092,8 @@ export default function App() {
             if (purchasePrice !== undefined) updatedItem.purchasePrice = purchasePrice;
             if (salesPrice !== undefined) updatedItem.salesPrice = salesPrice;
 
-            // Générer un nouvel embedding si les champs clés ont changé
-            try {
-              const embedding = await generateProductEmbedding(updatedItem);
-              updatedItem.embedding = embedding;
-            } catch (error) {
-              console.error('Failed to generate embedding for update:', error);
-            }
+            // Générer un nouvel embedding automatiquement + mise à jour store
+            await autoEmbed(updatedItem);
 
             await syncItem(updatedItem);
             return { barcode: item.barcode, name: item.name, updated: true };
@@ -1186,13 +1235,8 @@ export default function App() {
               lastUpdated: Date.now(),
             };
 
-            // Générer un embedding pour le nouveau produit
-            try {
-              const embedding = await generateProductEmbedding(item);
-              item.embedding = embedding;
-            } catch (error) {
-              console.error('Failed to generate embedding for new product:', error);
-            }
+            // Générer un embedding automatiquement + mise à jour store
+            await autoEmbed(item);
 
             const queued = await syncItem(item);
             showToast(queued ? `Produit cree en attente de synchro: ${resolvedName}` : `Produit cree: ${resolvedName}`);

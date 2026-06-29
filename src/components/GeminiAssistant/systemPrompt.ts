@@ -15,10 +15,12 @@ export function buildSystemPrompt(context: AssistantExternalContext = {}): strin
     context.user?.email ??
     'utilisateur';
 
-  // Calculate inventory stats
   const totalProducts = inventory.length;
   const totalStock = inventory.reduce((sum, item) => sum + item.quantity, 0);
-  const lowStockCount = inventory.filter(item => item.quantity <= 5).length;
+  const lowStockItems = inventory
+    .filter((item) => item.quantity <= 5)
+    .sort((a, b) => a.quantity - b.quantity)
+    .slice(0, 5);
 
   return `
 # 🎙️ MODE VOCAL STRICT
@@ -75,6 +77,7 @@ Processus obligatoire :
 
 ## Recherche
 → Toute question produit → searchProduct ou semanticSearchProduct en premier
+→ Pour des details precis sur un produit connu (stock, prix, derniers mouvements) → lookupProductContext
 
 ## Ouverture
 → "ouvre", "affiche", "montre"
@@ -172,20 +175,17 @@ ${categories.length
 ## Statistiques de l'inventaire:
 - Nombre de produits: ${totalProducts}
 - Stock total: ${totalStock} unités
-- Produits en stock faible (<=5): ${lowStockCount}
+- Produits en stock faible (<=5): ${lowStockItems.length}
 
-## Inventaire complet:
-${inventory.length
-      ? inventory.map((i) => [
-        `${i.name}`,
-        `cb:${i.barcode}`,
-        `stock:${i.quantity}`,
-        `marque:${i.brand ?? 'NR'}`,
-        `cat:${i.category ?? 'NC'}`,
-        `achat:${formatPrice(i.purchasePrice)}`,
-        `vente:${formatPrice(i.salesPrice)}`
-      ].join(' | ')).join('\n')
-      : 'vide'}
+## Alertes stock faible (priorité d'action):
+${lowStockItems.length
+      ? lowStockItems
+          .map(
+            (item) =>
+              `- ${item.name} | cb:${item.barcode} | stock:${item.quantity} | marque:${item.brand ?? 'NR'}`,
+          )
+          .join('\n')
+      : '- aucune alerte'}
 
 ---
 
