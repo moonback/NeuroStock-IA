@@ -261,126 +261,181 @@ export function CameraBarcodeScanner({ enabled, isBusy, onScan }: CameraBarcodeS
   }, [engine]);
 
   return (
-    <div className="rounded-2xl border border-stone-200 bg-stone-50/70 p-3">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-700">
-            <Camera className="h-3 w-3" />
-            Caméra mobile
-          </span>
-          <p className="mt-2 text-[11px] font-medium leading-relaxed text-stone-500">
-            Scannez sans douchette : autorisez la caméra, placez le code dans le guide et gardez le téléphone stable.
-          </p>
-        </div>
-        <span className="shrink-0 rounded-full border border-stone-200 bg-white px-2 py-1 text-[10px] font-bold text-stone-500">
-          {engineLabel}
-        </span>
-      </div>
+    <div className="overflow-hidden rounded-2xl border border-stone-200/60 bg-white shadow-sm">
 
-      <div className="relative overflow-hidden rounded-2xl border border-stone-900/10 bg-stone-950 aspect-video">
+      {/* ── Camera viewport ── */}
+      <div className="relative bg-stone-950" style={{ aspectRatio: '4/3' }}>
         <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
-        {!isOpen && (
-          <div className="absolute inset-0 grid place-items-center bg-stone-900 text-center text-white">
-            <div className="px-6">
-              <ScanLine className="mx-auto mb-2 h-8 w-8 text-sky-300" />
-              <p className="text-sm font-bold">Scan caméra smartphone</p>
-              <p className="mt-1 text-[11px] text-stone-300">Aucune douchette physique requise.</p>
-            </div>
-          </div>
-        )}
-        {isOpen && (
-          <div className="pointer-events-none absolute inset-0 grid place-items-center p-8">
-            <div className="relative h-28 w-full max-w-xs rounded-2xl border-2 border-sky-300/90 shadow-[0_0_0_999px_rgba(0,0,0,0.35)]">
-              <span className="absolute inset-x-4 top-1/2 h-0.5 -translate-y-1/2 animate-scan-line bg-gradient-to-r from-transparent via-sky-300 to-transparent" />
-            </div>
-          </div>
-        )}
-        {isStarting && (
-          <div className="absolute inset-0 grid place-items-center bg-stone-950/70 text-white backdrop-blur-sm">
-            <Loader2 className="h-7 w-7 animate-spin" />
-          </div>
-        )}
-      </div>
 
-      <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            if (isOpen) {
-              stopCamera();
-            } else {
-              void startCamera();
-            }
-          }}
-          disabled={!canScan || isStarting}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-sky-600 px-4 text-xs font-bold text-white shadow-md shadow-sky-600/20 transition hover:bg-sky-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
-        >
-          {isOpen ? <CameraOff className="h-4 w-4" /> : <Camera className="h-4 w-4" />}
-          {isOpen ? "Arrêter" : "Scanner avec la caméra"}
-        </button>
-        {videoInputs.length > 1 && (
+        {/* Idle placeholder */}
+        {!isOpen && !isStarting && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-stone-900">
+            {/* Corner guides */}
+            <div className="relative h-36 w-52">
+              <span className="absolute top-0 left-0 h-7 w-7 border-t-2 border-l-2 border-indigo-400 rounded-tl-md" />
+              <span className="absolute top-0 right-0 h-7 w-7 border-t-2 border-r-2 border-indigo-400 rounded-tr-md" />
+              <span className="absolute bottom-0 left-0 h-7 w-7 border-b-2 border-l-2 border-indigo-400 rounded-bl-md" />
+              <span className="absolute bottom-0 right-0 h-7 w-7 border-b-2 border-r-2 border-indigo-400 rounded-br-md" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-white">
+                <Camera className="h-6 w-6 text-stone-500" />
+                <p className="text-[11px] font-bold text-stone-300">Caméra désactivée</p>
+              </div>
+            </div>
+            {/* Start button inside viewport */}
+            <button
+              type="button"
+              onClick={() => void startCamera()}
+              disabled={!canScan}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none select-none cursor-pointer hover:bg-indigo-500"
+            >
+              <Camera className="h-4 w-4" />
+              Démarrer le scan
+            </button>
+          </div>
+        )}
+
+        {/* Loading overlay */}
+        {isStarting && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-stone-900/90 text-white backdrop-blur-sm">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+            <p className="text-xs font-bold text-stone-300">Activation caméra…</p>
+          </div>
+        )}
+
+        {/* Active scan overlay with animated corners + sweep line */}
+        {isOpen && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            {/* Dim surround */}
+            <div className="absolute inset-0 bg-stone-950/40" />
+            {/* Scan frame */}
+            <div className="relative z-10 h-36 w-64">
+              {/* Corners */}
+              <span className="absolute top-0 left-0 h-6 w-6 border-t-[3px] border-l-[3px] border-white rounded-tl-md" />
+              <span className="absolute top-0 right-0 h-6 w-6 border-t-[3px] border-r-[3px] border-white rounded-tr-md" />
+              <span className="absolute bottom-0 left-0 h-6 w-6 border-b-[3px] border-l-[3px] border-white rounded-bl-md" />
+              <span className="absolute bottom-0 right-0 h-6 w-6 border-b-[3px] border-r-[3px] border-white rounded-br-md" />
+              {/* Sweep line */}
+              <span className="absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 animate-scan-line rounded-full bg-gradient-to-r from-transparent via-indigo-400 to-transparent" />
+            </div>
+          </div>
+        )}
+
+        {/* Top-right status badge */}
+        <div className="absolute top-2.5 right-2.5">
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-bold backdrop-blur-sm ${
+            isOpen
+              ? 'bg-emerald-900/70 text-emerald-300'
+              : 'bg-stone-900/60 text-stone-400'
+          }`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${
+              isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-stone-500'
+            }`} />
+            {engineLabel}
+          </span>
+        </div>
+
+        {/* Torch button overlay (only if active + supported) */}
+        {isOpen && torchSupported && (
           <button
             type="button"
-            onClick={() => setIsCameraPickerOpen(true)}
-            className="grid h-11 w-11 place-items-center rounded-2xl border border-stone-200 bg-white text-stone-600 transition hover:text-sky-700"
-            aria-label={`Choisir la caméra. Caméra actuelle : ${selectedCameraLabel}`}
-            title={`Choisir caméra · ${selectedCameraLabel}`}
+            onClick={toggleTorch}
+            className={`absolute bottom-2.5 right-2.5 grid h-9 w-9 place-items-center rounded-xl transition active:scale-95 cursor-pointer ${
+              torchEnabled
+                ? 'bg-amber-400/90 text-stone-900'
+                : 'bg-stone-900/60 text-white backdrop-blur-sm hover:bg-stone-800/80'
+            }`}
+            aria-label={torchEnabled ? 'Désactiver la torche' : 'Activer la torche'}
           >
-            <Camera className="h-4 w-4" />
+            {torchEnabled ? <FlashlightOff className="h-4 w-4" /> : <Flashlight className="h-4 w-4" />}
           </button>
         )}
-        <button
-          type="button"
-          onClick={toggleTorch}
-          disabled={!isOpen || !torchSupported}
-          className="grid h-11 w-11 place-items-center rounded-2xl border border-stone-200 bg-white text-stone-600 transition hover:text-sky-700 disabled:pointer-events-none disabled:opacity-40"
-          aria-label={torchEnabled ? "Désactiver la torche" : "Activer la torche"}
-          title={torchSupported ? "Torche" : "Torche non prise en charge"}
-        >
-          {torchEnabled ? <FlashlightOff className="h-4 w-4" /> : <Flashlight className="h-4 w-4" />}
-        </button>
       </div>
 
+      {/* ── Info bar ── */}
+      <div className="flex items-center justify-between gap-3 border-b border-stone-100 px-4 py-2.5">
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">
+          <Camera className="h-3 w-3" />
+          Caméra mobile
+        </span>
+        {isOpen && (
+          <span className="text-[10px] font-medium text-stone-400 truncate max-w-[60%] text-right">
+            {selectedCameraLabel}
+          </span>
+        )}
+      </div>
+
+      {/* ── Controls (visible only when camera is open) ── */}
+      {isOpen && (
+        <div className="flex gap-2 px-4 py-3">
+          <button
+            type="button"
+            onClick={stopCamera}
+            className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-xs font-bold transition active:scale-[0.98] select-none cursor-pointer bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100"
+          >
+            <CameraOff className="h-4 w-4" />
+            Arrêter
+          </button>
+          {videoInputs.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setIsCameraPickerOpen(true)}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-stone-200/80 bg-white text-stone-500 transition hover:text-stone-900 active:scale-95 cursor-pointer"
+              aria-label={`Choisir la caméra. Caméra actuelle : ${selectedCameraLabel}`}
+            >
+              <Camera className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── Status / error banner ── */}
       {(status || error) && (
-        <div className={`mt-3 flex gap-2 rounded-2xl border px-3 py-2 text-[11px] font-semibold ${error ? "border-rose-200 bg-rose-50 text-rose-600" : "border-sky-200 bg-sky-50 text-sky-700"}`}>
+        <div className={`mx-4 mb-3 flex items-start gap-2 rounded-xl border px-3 py-2.5 text-[11px] font-semibold ${
+          error
+            ? 'border-rose-200 bg-rose-50 text-rose-600'
+            : 'border-indigo-100 bg-indigo-50/60 text-indigo-700'
+        }`}>
           {error && <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
           <span>{error || status}</span>
         </div>
       )}
 
+      {/* ── Camera picker sheet ── */}
       {isCameraPickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="w-full max-w-sm rounded-t-3xl border border-stone-200 bg-white p-4 shadow-2xl sm:rounded-3xl">
-            <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-t-2xl border-t border-stone-200/60 bg-white px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 shadow-2xl">
+            <div className="flex justify-center mb-4">
+              <div className="h-1 w-10 rounded-full bg-stone-200" />
+            </div>
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-bold text-stone-900">Choisir une caméra</p>
-                <p className="mt-1 text-[11px] font-medium text-stone-500">Caméra actuelle : {selectedCameraLabel}</p>
+                <p className="text-sm font-extrabold text-stone-900">Choisir une caméra</p>
+                <p className="mt-0.5 text-[11px] font-medium text-stone-400">Active : {selectedCameraLabel}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCameraPickerOpen(false)}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-stone-100 text-stone-500 transition hover:bg-stone-200 hover:text-stone-800"
-                aria-label="Fermer le choix de caméra"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-stone-200/80 bg-white text-stone-400 transition hover:text-stone-900 active:scale-95 cursor-pointer"
+                aria-label="Fermer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-
             <div className="space-y-2">
               {videoInputs.map((device, index) => (
                 <button
                   key={device.deviceId || `camera-${index}`}
                   type="button"
                   onClick={() => handleCameraSelection(device.deviceId)}
-                  className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-3 text-left text-xs font-bold transition ${
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left text-xs font-bold transition cursor-pointer select-none ${
                     device.deviceId === selectedCameraId
-                      ? "border-sky-200 bg-sky-50 text-sky-700"
-                      : "border-stone-200 bg-white text-stone-700 hover:border-sky-200 hover:bg-sky-50/60 hover:text-sky-700"
+                      ? 'border-indigo-200/80 bg-indigo-50/70 text-indigo-800'
+                      : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50'
                   }`}
                 >
                   <span>{device.label || `Caméra ${index + 1}`}</span>
                   {device.deviceId === selectedCameraId && (
-                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] uppercase tracking-wide">Active</span>
+                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-indigo-700">Active</span>
                   )}
                 </button>
               ))}
