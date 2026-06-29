@@ -4,6 +4,7 @@ import { X, FileText, Table, Check, Loader as Loader2, Upload } from "lucide-rea
 import { InventoryItem, CategoryItem } from "../types";
 import { jsPDF } from "jspdf";
 import { upsertInventoryItem } from "../lib/supabaseInventory";
+import { getProductData } from "../api";
 
 type ExportModalProps = {
   items: InventoryItem[];
@@ -626,7 +627,7 @@ export function ExportModal({
           const purchasePrice = cols[purchaseIdx] ? parseFloat(cols[purchaseIdx]) : undefined;
           const salesPrice = cols[salesIdx] ? parseFloat(cols[salesIdx]) : undefined;
 
-          parsed.push({
+          const item: InventoryItem = {
             barcode,
             name,
             quantity: isNaN(quantity) ? 1 : quantity,
@@ -635,7 +636,9 @@ export function ExportModal({
             lastUpdated: Date.now(),
             purchasePrice: isNaN(purchasePrice ?? NaN) ? undefined : purchasePrice,
             salesPrice: isNaN(salesPrice ?? NaN) ? undefined : salesPrice,
-          });
+          };
+
+          parsed.push(item);
 
           setProgress({
             current: i - 1,
@@ -664,6 +667,37 @@ export function ExportModal({
         }
 
         onImport?.(parsed);
+
+        // Rattrapage images OpenFoodFacts après import (débit très espacé pour éviter 429)
+        const missingImage = parsed.filter((p) => !p.imageUrl && p.barcode);
+        if (missingImage.length > 0) {
+          setProgress({
+            current: 0,
+            total: missingImage.length,
+            label: "Recherche d'images OpenFoodFacts...",
+          });
+          for (let k = 0; k < missingImage.length; k++) {
+            const product = missingImage[k];
+            try {
+              const offData = await getProductData(product.barcode!);
+              if (offData?.imageUrl) {
+                product.imageUrl = offData.imageUrl;
+                await upsertInventoryItem(product);
+              }
+            } catch {
+              // silencieux
+            }
+            setProgress({
+              current: k + 1,
+              total: missingImage.length,
+              label: `Image OpenFoodFacts - ${product.name}`,
+            });
+            // Délai long (~1s) entre chaque requête pour rester sous les limites de taux OFF
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+          onImport?.(parsed);
+        }
+
         onClose();
       } catch (error) {
         console.error("Erreur lors de l'import CSV:", error);
