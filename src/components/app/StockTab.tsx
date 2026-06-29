@@ -87,6 +87,10 @@ export function StockTab({
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
   const paginatedInventory = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredInventory.slice(startIndex, startIndex + ITEMS_PER_PAGE);
