@@ -79,6 +79,12 @@ Processus obligatoire :
 → Toute question produit → searchProduct ou semanticSearchProduct en premier
 → Pour des details precis sur un produit connu (stock, prix, derniers mouvements) → lookupProductContext
 
+## Proactivité
+→ Apres un scan, si stock faible detecte → proposer suggestRestock
+→ Si l'utilisateur demande "resume", "bilan", "alertes" → generateDailyInsights
+→ En cas de categorie inconnue ou absente → smartCategorySuggestion
+→ Periodiquement ou sur demande → detectAnomalies (prix negatifs, doublons)
+
 ## Ouverture
 → "ouvre", "affiche", "montre"
 → openProductDetails

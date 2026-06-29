@@ -1038,6 +1038,78 @@ export default function App() {
               },
             };
           },
+          suggestRestock: async (args) => {
+            const limit = Number(args.limit) || 5;
+            const candidates = inventory
+              .filter((item) => item.quantity <= 5)
+              .sort((a, b) => a.quantity - b.quantity)
+              .slice(0, limit);
+
+            return {
+              items: candidates.map((item) => ({
+                barcode: item.barcode,
+                name: item.name,
+                quantity: item.quantity,
+                brand: item.brand,
+                category: item.category,
+                lastMovement: item.lastMovement,
+              })),
+            };
+          },
+          detectAnomalies: async () => {
+            const anomalies: Array<Record<string, unknown>> = [];
+
+            for (const item of inventory) {
+              if (item.quantity < 0) {
+                anomalies.push({ type: 'negative_stock', barcode: item.barcode, name: item.name, quantity: item.quantity });
+              }
+              if (item.purchasePrice != null && item.salesPrice != null && item.salesPrice < item.purchasePrice) {
+                anomalies.push({ type: 'price_inversion', barcode: item.barcode, name: item.name, purchasePrice: item.purchasePrice, salesPrice: item.salesPrice });
+              }
+            }
+
+            const seen = new Map<string, InventoryItem>();
+            for (const item of inventory) {
+              const key = `${item.name}|${item.brand ?? ''}`.toLowerCase();
+              const existing = seen.get(key);
+              if (existing) {
+                anomalies.push({ type: 'potential_duplicate', barcode: item.barcode, name: item.name, duplicateOf: existing.barcode });
+              } else {
+                seen.set(key, item);
+              }
+            }
+
+            return { anomalies };
+          },
+          generateDailyInsights: async () => {
+            const totalProducts = inventory.length;
+            const totalStock = inventory.reduce((sum, item) => sum + item.quantity, 0);
+            const lowStockCount = inventory.filter((item) => item.quantity <= 5).length;
+            const topMovers = inventory
+              .filter((item) => item.lastMovement != null)
+              .sort((a, b) => (b.lastMovement ?? 0) - (a.lastMovement ?? 0))
+              .slice(0, 3);
+
+            return {
+              totalProducts,
+              totalStock,
+              lowStockCount,
+              topMovers: topMovers.map((item) => ({ barcode: item.barcode, name: item.name, lastMovement: item.lastMovement })),
+            };
+          },
+          smartCategorySuggestion: async (args) => {
+            const name = String(args.name ?? "").trim();
+            const brand = String(args.brand ?? "").trim();
+            if (!name) throw new Error("Nom du produit requis pour suggerer une categorie.");
+
+            const contextCategories = dbCategories.map((cat) => cat.name);
+            const localSuggestion = suggestCategory(name, undefined, contextCategories);
+            if (localSuggestion) {
+              return { suggested: localSuggestion, source: "local" };
+            }
+
+            return { suggested: undefined, source: "none" };
+          },
           updateStock: async (args) => {
             const quantity = Number(args.quantity);
             const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);

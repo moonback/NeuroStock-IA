@@ -6,6 +6,10 @@ export const tools: ToolDefinition[] = [
   { name: 'regenerateEmbeddings', description: 'Regenerer les embeddings pour tous les produits ou un produit specifique', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' } } } },
   { name: 'openProductDetails', description: "Ouvrir la fiche detaillee mobile d'un produit present dans l'inventaire", parameters: { type: 'object', properties: { query: { type: 'string' }, barcode: { type: 'string' } } } },
   { name: 'lookupProductContext', description: "Recuperer le contexte complet d'un produit (stock, prix, derniers mouvements) depuis l'inventaire courant", parameters: { type: 'object', properties: { barcode: { type: 'string' }, query: { type: 'string' } } } },
+  { name: 'suggestRestock', description: 'Suggere les produits a recomander en priorite selon le stock et les mouvements recents', parameters: { type: 'object', properties: { limit: { type: 'number' } } } },
+  { name: 'detectAnomalies', description: 'Detecte les anomalies inventaire (prix aberrant, stock negatif, doublons potentiels)', parameters: { type: 'object', properties: {} } },
+  { name: 'generateDailyInsights', description: 'Genere un resume vocal proactif : alertes, top mouvements, valeur stock', parameters: { type: 'object', properties: {} } },
+  { name: 'smartCategorySuggestion', description: 'Suggere une categorie pour un produit via IA lorsque les rules locales ne matchent pas', parameters: { type: 'object', properties: { name: { type: 'string' }, brand: { type: 'string' } }, required: ['name'] } },
   { name: 'updateStock', description: 'Modifier un stock', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' }, query: { type: 'string' }, name: { type: 'string' }, quantity: { type: 'number' } }, required: ['quantity'] } },
   {
     name: 'updateProduct',
