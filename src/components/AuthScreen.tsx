@@ -53,24 +53,30 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="relative min-h-screen flex items-center justify-center p-5 overflow-hidden">
+      {/* Ambient background */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.08),transparent)]" />
+      <div className="pointer-events-none absolute -top-32 -left-32 h-80 w-80 rounded-full bg-indigo-100/40 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-100/30 blur-3xl" />
+
+      <div className="relative w-full max-w-sm space-y-7">
         {/* App Logo & Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-grid h-14 w-14 place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 mx-auto">
-            <Store className="h-7 w-7" />
+        <div className="text-center space-y-3">
+          <div className="inline-grid h-16 w-16 place-items-center rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-600/25 mx-auto">
+            <Store className="h-8 w-8" />
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-stone-900">NeuroStock</h1>
-          <p className="text-xs text-stone-500 font-medium">
-            Connectez-vous pour accéder à votre inventaire
-          </p>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-stone-900">NeuroStock</h1>
+            <p className="mt-1 text-xs text-stone-400 font-medium leading-relaxed">
+              Connectez-vous pour accéder à votre inventaire
+            </p>
+          </div>
         </div>
 
         {/* Auth Panel */}
-        <div className="surface-card rounded-[2rem] p-6 relative overflow-hidden">
-          {/* Slide transition container for switching forms */}
+        <div className="rounded-2xl border border-stone-200/60 bg-white p-6 shadow-xl shadow-stone-900/5">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-lg font-bold text-stone-900 mb-2">
+            <h2 className="text-base font-bold text-stone-900 mb-1">
               {isLogin ? "Connexion" : "Créer un compte"}
             </h2>
 

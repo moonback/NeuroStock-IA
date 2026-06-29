@@ -146,7 +146,7 @@ export function CategoryFilterModal({
             })}
           </div>
 
-          <button onClick={onClose} className="w-full py-4 text-sm font-semibold text-stone-500 bg-transparent border border-stone-200 hover:bg-stone-50 hover:text-stone-800 active:scale-[0.98] rounded-2xl transition touch-target">
+          <button onClick={onClose} className="w-full py-3 text-xs font-bold text-stone-500 bg-transparent border border-stone-200/80 hover:bg-stone-50 hover:text-stone-800 active:scale-[0.98] rounded-xl transition cursor-pointer select-none tap-active">
             Annuler
           </button>
         </div>
@@ -166,25 +166,26 @@ type CategoryButtonProps = {
 function CategoryButton({ active, title, subtitle, icon, onClick }: CategoryButtonProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`w-full flex items-center justify-between p-3 rounded-xl border transition touch-target ${
+      className={`w-full flex items-center justify-between p-3 rounded-xl border transition select-none tap-active cursor-pointer ${
         active
-          ? "bg-indigo-600 border-indigo-600 text-white"
-          : "bg-white border-stone-200 text-stone-900 hover:border-indigo-300 hover:bg-indigo-50"
+          ? "bg-indigo-50/70 border-indigo-250/50 text-indigo-950 shadow-xs"
+          : "bg-white border-stone-200 text-stone-900 hover:border-stone-300 hover:bg-stone-50/50"
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg ${
-          active ? "bg-white/20" : "bg-stone-50 border border-stone-200"
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+          active ? "bg-indigo-100/60 text-indigo-700" : "bg-stone-50 border border-stone-150 text-stone-500"
         }`}>
           {icon}
         </div>
         <div className="text-left">
-          <p className="text-sm font-bold">{title}</p>
-          <p className="text-[10px] font-mono tabular opacity-80">{subtitle}</p>
+          <p className={`text-xs font-bold ${active ? "text-indigo-950" : "text-stone-850"}`}>{title}</p>
+          <p className={`text-[9px] font-bold uppercase tracking-wider mt-0.5 ${active ? "text-indigo-650" : "text-stone-400"}`}>{subtitle}</p>
         </div>
       </div>
-      {active && <Check className="w-5 h-5" />}
+      {active && <Check className="w-4 h-4 text-indigo-600 stroke-[3.5]" />}
     </button>
   );
 }

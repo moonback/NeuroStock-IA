@@ -33,25 +33,43 @@ export function AutomaticScanPanel({
   onScan,
 }: AutomaticScanPanelProps) {
   return (
-    <section className="space-y-4">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-700 p-4 shadow-xl shadow-amber-500/20 sm:p-6">
-        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg sm:h-14 sm:w-14">
-              <Zap className="h-5 w-5 text-white sm:h-7 sm:w-7" />
+    <section className="space-y-3">
+      {/* Scan header card */}
+      <div className="rounded-2xl border border-stone-200/60 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/15">
+              <Zap className="h-5 w-5" />
             </div>
-            <div className="pt-0.5 sm:pt-1">
-              <h2 className="text-xl font-bold text-white tracking-tight sm:text-2xl">Scan Auto</h2>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm sm:px-2.5 sm:text-xs">
-                  {!isOnline ? "Hors-ligne" : pendingCount > 0 ? `${pendingCount} en attente` : syncError ? "Erreur" : "Synchro On"}
-                </span>
-              </div>
+            <div>
+              <h2 className="text-sm font-extrabold tracking-tight text-stone-900 leading-tight">
+                Scan Auto
+              </h2>
+              <p className="mt-0.5 text-[10px] font-bold text-stone-400 leading-none">
+                {!isOnline
+                  ? "Hors-ligne"
+                  : pendingCount > 0
+                  ? `${pendingCount} modification${pendingCount > 1 ? "s" : ""} en attente`
+                  : syncError
+                  ? "Erreur de synchronisation"
+                  : "Synchronisé"}
+              </p>
             </div>
           </div>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+            !isOnline
+              ? "bg-stone-100 text-stone-500"
+              : pendingCount > 0
+              ? "bg-amber-50 text-amber-700 border border-amber-200"
+              : syncError
+              ? "bg-rose-50 text-rose-600 border border-rose-200"
+              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              !isOnline ? "bg-stone-400" : pendingCount > 0 ? "bg-amber-500 animate-pulse" : syncError ? "bg-rose-500" : "bg-emerald-500"
+            }`} />
+            {!isOnline ? "Hors-ligne" : pendingCount > 0 ? `${pendingCount} en attente` : syncError ? "Erreur" : "Synchro On"}
+          </span>
         </div>
       </div>
 
@@ -93,7 +111,8 @@ export function AutomaticScanPanel({
       )}
 
       {!enabled && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700">
+        <div className="flex items-start gap-2.5 rounded-xl border border-stone-200/60 bg-stone-50/60 px-3.5 py-3 text-[11px] font-medium text-stone-500">
+          <ScanLine className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-stone-400" />
           Activez le scan automatique pour appliquer les mouvements sans fenêtre de confirmation.
         </div>
       )}
