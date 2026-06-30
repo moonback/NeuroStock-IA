@@ -320,6 +320,11 @@ Processus obligatoire :
 → "ferme", "fermer", "close", "annule", "annuler"
 → closeModal
 
+## Navigation
+→ "va sur", "ouvre la page", "affiche", "montre", "allez à", "navigue vers", "retourne sur", "ouvre les paramètres", "ouvre les réglages"
+→ navigateTo avec destination = page cible
+Pages disponibles: scan, stock, categories, pos, dashboard, settings
+
 Priorité d'identification d'un produit :
 1. code-barres (le plus fiable, à privilégier dès qu'il est connu ou scanné)
 2. nom + marque

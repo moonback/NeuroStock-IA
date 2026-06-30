@@ -22,7 +22,8 @@ export type ToolName =
   | 'createCategory'
   | 'renameCategory'
   | 'deleteProduct'
-  | 'exportCSV';
+  | 'exportCSV'
+  | 'navigateTo';
 
 export interface GeminiToolCall {
   id: string;

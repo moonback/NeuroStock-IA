@@ -1009,6 +1009,19 @@ export default function App() {
             setActionModal(null);
             return { closed: true };
           },
+          navigateTo: async (args) => {
+            const destination = String(args.destination ?? '').toLowerCase().trim();
+            const validTabs: AppTab[] = ['scan', 'stock', 'categories', 'pos', 'dashboard', 'settings'];
+            const match = destination as AppTab | undefined;
+            if (!validTabs.includes(match)) {
+              return {
+                navigated: false,
+                error: `Page inconnue: ${destination}. Pages disponibles: ${validTabs.join(', ')}`,
+              };
+            }
+            setActiveTab(match);
+            return { navigated: true, destination: match };
+          },
           updateStock: async (args) => {
             const requestedQuantity = Number(args.quantity);
             const mode = String(args.operation ?? args.mode ?? "").trim().toLowerCase();
