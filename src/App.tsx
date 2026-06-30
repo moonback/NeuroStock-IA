@@ -956,14 +956,6 @@ export default function App() {
             };
           },
           openProductDetails: async (args) => {
-            if (!isMobileViewport()) {
-              return {
-                opened: false,
-                mobileOnly: true,
-                error: "Cette action est disponible uniquement sur mobile.",
-              };
-            }
-
             const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
             if (item) {
               setActionModal({ type: "product_details", product: item });
