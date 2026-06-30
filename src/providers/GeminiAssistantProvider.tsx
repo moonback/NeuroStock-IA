@@ -6,6 +6,7 @@ import { FunctionDispatcher } from '../components/GeminiAssistant/FunctionDispat
 import { LiveSession } from '../components/GeminiAssistant/LiveSession';
 import type { AssistantExternalContext, GeminiAssistantContextValue, GeminiAssistantProviderProps, PermissionRequest } from '../components/GeminiAssistant/types';
 import { AssistantState } from '../components/GeminiAssistant/types';
+import { registerAssistantSpeaker } from '../components/GeminiAssistant/assistantBridge';
 
 export const GeminiAssistantContext = createContext<GeminiAssistantContextValue | null>(null);
 
@@ -52,6 +53,17 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
   const rememberProduct = useCallback((product: AssistantExternalContext['activeProduct']) => {
     activeProductRef.current = product ?? null;
   }, []);
+
+  const speakText = useCallback((text: string) => {
+    if (!session.current?.isConnected()) {
+      return;
+    }
+    session.current.sendText(text);
+  }, []);
+
+  useMemo(() => {
+    registerAssistantSpeaker(speakText);
+  }, [speakText]);
 
   const open = useCallback(async () => {
     setOpen(true);

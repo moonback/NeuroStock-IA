@@ -75,6 +75,14 @@ export class LiveSession {
     this.session.sendRealtimeInput?.({ audio: { mimeType: 'audio/pcm;rate=16000', data: int16ToBase64(pcm) } });
   }
 
+  sendText(text: string): void {
+    if (!this.session || !text.trim()) {
+      return;
+    }
+
+    this.session.sendRealtimeInput?.({ text: text.trim() });
+  }
+
   async sendToolResult(result: GeminiToolResult): Promise<void> {
     this.session?.sendToolResponse?.({ functionResponses: [{ id: result.id, name: result.name, response: result.response }] });
   }

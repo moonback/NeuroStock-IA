@@ -39,6 +39,7 @@ import { POSTab } from "./components/app/POSTab";
 import { SyncNotice } from "./components/app/SyncNotice";
 import { GeminiAssistantProvider } from "./providers/GeminiAssistantProvider";
 import { generateProductEmbedding, fullSemanticSearch } from "./lib/embeddingService";
+import { speakAssistantText } from "./components/GeminiAssistant/assistantBridge";
 
 
 type ActionModalState =
@@ -349,6 +350,9 @@ export default function App() {
       const existingItem = inventory.find((i) => i.barcode === barcode);
       if (existingItem) {
         triggerHaptic("success");
+        assistantRecentProductRef.current = existingItem;
+        setAssistantRecentProduct(existingItem);
+        speakAssistantText(`Produit détecté. Je peux agir sur ${existingItem.name}.`);
         setActionModal({
           type: "scan_choice",
           product: existingItem,
@@ -364,6 +368,9 @@ export default function App() {
           : null;
         if (databaseItem) {
           triggerHaptic("success");
+          assistantRecentProductRef.current = databaseItem;
+          setAssistantRecentProduct(databaseItem);
+          speakAssistantText(`Produit détecté. Je peux agir sur ${databaseItem.name}.`);
           setActionModal({
             type: "scan_choice",
             product: databaseItem,
@@ -374,10 +381,14 @@ export default function App() {
         const data = await getProductData(barcode);
         if (data) {
           const suggested = suggestCategory(data.name, data.category, dbCategories);
+          const scannedProduct = { barcode, ...data, category: suggested || data.category };
           triggerHaptic("success");
+          assistantRecentProductRef.current = scannedProduct as InventoryItem;
+          setAssistantRecentProduct(scannedProduct as InventoryItem);
+          speakAssistantText(`Produit détecté. Je peux agir sur ${scannedProduct.name}.`);
           setActionModal({
             type: "quantity",
-            product: { barcode, ...data, category: suggested || data.category },
+            product: scannedProduct,
             existingQty: 0,
             isNew: true,
           });
