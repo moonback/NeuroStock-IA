@@ -740,7 +740,7 @@ export default function App() {
   const lowStockCount = inventory.filter((item) => item.quantity <= 5).length;
 
   const recentlyScanned = useMemo(() => {
-    return [...inventory].sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, 3);
+    return [...inventory].sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, 4);
   }, [inventory]);
 
   const financialStats = useMemo(() => {

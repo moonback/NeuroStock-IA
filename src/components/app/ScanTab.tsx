@@ -58,35 +58,7 @@ export function ScanTab({
           )}
         </AnimatePresence>
 
-        {scannerInputMode === "hardware" ? (
-          <motion.button
-            whileHover={{ scale: 1.01, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            animate={{
-              y: [0, -6, 0],
-            }}
-            transition={{
-              y: {
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }
-            }}
-            onClick={() => document.getElementById("barcode-input")?.focus()}
-            disabled={isScannerDisabled}
-            className="w-full bg-gradient-to-br from-indigo-600 via-indigo-650 to-violet-600 text-white rounded-3xl p-6.5 flex flex-col items-center justify-center gap-4.5 shadow-xl shadow-indigo-650/20 transition-all disabled:opacity-50 cursor-pointer select-none mb-5"
-          >
-            <div className="h-14 w-14 bg-white/15 rounded-2xl grid place-items-center shadow-inner">
-              <Scan className="h-7 w-7 animate-pulse text-white" />
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-black tracking-tight">Prêt à scanner</div>
-              <div className="text-[11px] text-indigo-100 font-semibold mt-1">
-                Utilisez votre scanner physique ou touchez ici
-              </div>
-            </div>
-          </motion.button>
-        ) : (
+        {scannerInputMode === "camera" && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -122,7 +94,7 @@ export function ScanTab({
               {recentlyScanned.length} article{recentlyScanned.length > 1 ? "s" : ""}
             </span>
           </div>
-          <motion.div 
+          <motion.div
             initial="hidden"
             animate="show"
             variants={{
@@ -134,7 +106,7 @@ export function ScanTab({
                 }
               }
             }}
-            className="grid grid-cols-2 gap-3"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-3"
           >
             {recentlyScanned.map((item) => (
               <motion.div
@@ -217,9 +189,8 @@ const RecentScanGridItem: React.FC<RecentScanGridItemProps> = ({ item, onEditPro
 
           <button
             onClick={() => onEditQuantity(item)}
-            className={`min-w-[32px] text-center text-sm font-extrabold font-mono tabular cursor-pointer ${
-              isLow ? "text-amber-600" : "text-stone-900"
-            }`}
+            className={`min-w-[32px] text-center text-sm font-extrabold font-mono tabular cursor-pointer ${isLow ? "text-amber-600" : "text-stone-900"
+              }`}
           >
             <AnimatedQuantity value={item.quantity} />
           </button>
