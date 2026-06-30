@@ -90,7 +90,12 @@ export function ScanTab({
             <h3 className="text-[11px] font-extrabold uppercase tracking-widest text-stone-400">
               Derniers scans
             </h3>
-            <span className="text-[10px] font-bold text-stone-400 tabular">
+            {/* Mobile count */}
+            <span className="text-[10px] font-bold text-stone-400 tabular lg:hidden">
+              {Math.min(recentlyScanned.length, 4)} article{Math.min(recentlyScanned.length, 4) > 1 ? "s" : ""}
+            </span>
+            {/* Desktop count */}
+            <span className="text-[10px] font-bold text-stone-400 tabular hidden lg:inline">
               {recentlyScanned.length} article{recentlyScanned.length > 1 ? "s" : ""}
             </span>
           </div>
@@ -108,14 +113,14 @@ export function ScanTab({
             }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-3"
           >
-            {recentlyScanned.map((item) => (
+            {recentlyScanned.map((item, index) => (
               <motion.div
                 key={item.barcode}
                 variants={{
                   hidden: { opacity: 0, y: 15 },
                   show: { opacity: 1, y: 0 }
                 }}
-                className="h-full"
+                className={`h-full ${index >= 4 ? "hidden lg:block" : ""}`}
               >
                 <RecentScanGridItem
                   item={item}
