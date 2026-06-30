@@ -41,8 +41,6 @@ function SwipeableItem({ children, isCompact = false, onSwipeRight, onSwipeLeft 
     setCurrentX(0);
   };
 
-  // Intensity ramps from 0 to 1 as the user swipes toward the threshold,
-  // used to scale the icon and deepen the tint for tactile feedback.
   const intensity = Math.min(Math.abs(currentX) / 85, 1);
   const swipeClass = isSwiping ? "" : "transition-transform duration-200 ease-out";
   const roundedClass = isCompact ? "rounded-xl" : "rounded-2xl";
@@ -126,11 +124,9 @@ export function InventoryGrid({
     if (!text || searchTokens.length === 0) {
       return text;
     }
-
     const escapedTokens = searchTokens.map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
     const regex = new RegExp(`(${escapedTokens.join("|")})`, "gi");
     const parts = text.split(regex);
-
     return parts.map((part, index) =>
       escapedTokens.some((token) => new RegExp(`^${token}$`, "i").test(part)) ? (
         <mark key={`${part}-${index}`} className={highlightClassName}>
@@ -142,53 +138,42 @@ export function InventoryGrid({
     );
   };
 
-  const renderNewBadge = (item: InventoryItem) => {
-    if (!isRecentTimestamp(item.lastUpdated)) return null;
-
-    return (
-      <span className="inline-flex items-center rounded-full bg-sky-50 border border-sky-200 px-2 py-0.5 text-[9px] font-bold text-sky-700">
-        Nouveau
-      </span>
-    );
-  };
-
   const getStockTone = (quantity: number) => {
     if (quantity === 0) {
       return {
-        badge: "border-rose-200 bg-rose-50 text-rose-700 animate-pulse",
+        badge: "border-rose-200 bg-rose-50 text-rose-700",
         text: "text-rose-600",
         dot: "bg-rose-500",
+        label: "Rupture",
+        labelColor: "text-rose-500",
+        accentBorder: "border-l-rose-400",
+        imageBg: "from-rose-50/50 via-stone-50 to-white",
       };
     }
     if (quantity <= 5) {
       return {
-        badge: "border-amber-200 bg-amber-50 text-amber-750",
+        badge: "border-amber-200 bg-amber-50 text-amber-700",
         text: "text-amber-600",
         dot: "bg-amber-500",
+        label: "Stock bas",
+        labelColor: "text-amber-600",
+        accentBorder: "border-l-amber-400",
+        imageBg: "from-amber-50/40 via-stone-50 to-white",
       };
     }
     return {
       badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
       text: "text-stone-900",
       dot: "bg-emerald-500",
+      label: "En stock",
+      labelColor: "text-emerald-600",
+      accentBorder: "border-l-emerald-400",
+      imageBg: "from-stone-50/60 via-stone-50 to-white",
     };
   };
 
-  const renderStockBadge = (quantity: number, expanded = false) => {
-    const tone = getStockTone(quantity);
-    return (
-      <span
-        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${
-          expanded ? "min-h-7 text-[11px]" : ""
-        } ${tone.badge}`}
-      >
-        {expanded ? `${quantity} en rayon` : quantity}
-      </span>
-    );
-  };
-
   const getCategoryLabel = (categoryName: string) => {
-    const categoryMatch = categories.find((category) => category.name.toLowerCase() === categoryName.toLowerCase());
+    const categoryMatch = categories.find((c) => c.name.toLowerCase() === categoryName.toLowerCase());
     return categoryMatch?.icon ? `${categoryMatch.icon} ${categoryName}` : categoryName;
   };
 
@@ -221,29 +206,42 @@ export function InventoryGrid({
   }
 
   return (
-    <div className="space-y-5.5">
+    <div className="space-y-8">
       {groupedItems.map((group) => {
-        const lowStockCount = group.items.filter((item) => item.quantity <= 5).length;
+        const outCount = group.items.filter((i) => i.quantity === 0).length;
+        const lowCount = group.items.filter((i) => i.quantity > 0 && i.quantity <= 5).length;
 
         return (
-          <div key={group.category} className="space-y-2.5">
-            <div className="flex items-center gap-2 px-1">
-              <h3 className="text-xs font-black uppercase tracking-wider text-stone-400">
-                {getCategoryLabel(group.category)}
-              </h3>
-              <span className="h-px flex-1 bg-stone-200/60" aria-hidden="true" />
-              {lowStockCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  {lowStockCount} bas
+          <div key={group.category}>
+            {/* ── Category header ── */}
+            <div className="flex items-center gap-3 mb-3.5">
+              <div className="flex items-center gap-2 shrink-0">
+                <h3 className="text-[11px] font-black uppercase tracking-widest text-stone-500">
+                  {getCategoryLabel(group.category)}
+                </h3>
+                <span className="text-[10px] font-extrabold font-mono tabular-nums px-2 py-0.5 bg-stone-100 text-stone-500 rounded-full border border-stone-200/60">
+                  {group.items.length}
                 </span>
-              )}
-              <span className="text-[10px] font-extrabold font-mono tabular-nums px-2 py-0.5 bg-stone-100 text-stone-500 rounded-full border border-stone-200/50">
-                {group.items.length}
-              </span>
+              </div>
+              <span className="h-px flex-1 bg-gradient-to-r from-stone-200/80 to-transparent" />
+              <div className="flex items-center gap-1.5 shrink-0">
+                {outCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    {outCount} rupture{outCount > 1 ? "s" : ""}
+                  </span>
+                )}
+                {lowCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                    {lowCount} bas
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className={isCompactView ? "space-y-2" : "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"}>
+            {/* ── Items ── */}
+            <div className={isCompactView ? "space-y-2" : "grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4"}>
               {group.items.map((item) => {
                 const tone = getStockTone(item.quantity);
 
@@ -255,6 +253,7 @@ export function InventoryGrid({
                     onSwipeLeft={() => onRemove(item.barcode)}
                   >
                     {isCompactView ? (
+                      /* ── COMPACT (mobile) ── */
                       <motion.article
                         initial={{ opacity: 0, y: 12 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -274,137 +273,138 @@ export function InventoryGrid({
                             <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-white ${tone.dot}`} />
                           )}
                         </div>
-
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <h4 className="font-extrabold text-xs text-stone-850 truncate leading-snug">
                               {renderHighlightedText(item.name, "rounded bg-amber-100 px-0.5 text-stone-950")}
                             </h4>
-                            {renderNewBadge(item)}
+                            {isRecentTimestamp(item.lastUpdated) && (
+                              <span className="inline-flex items-center rounded-full bg-sky-50 border border-sky-200 px-1.5 py-0.5 text-[9px] font-bold text-sky-700">Nouveau</span>
+                            )}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold text-stone-400">
                             {item.brand && <span className="truncate text-stone-500 font-semibold">{item.brand}</span>}
                             <span className="font-mono text-[9px] text-stone-450">{item.barcode}</span>
                           </div>
                         </div>
-
                         <div className="flex items-center gap-2">
-                          {item.quantity <= 5 && renderStockBadge(item.quantity)}
+                          {item.quantity <= 5 && (
+                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${tone.badge}`}>
+                              {item.quantity}
+                            </span>
+                          )}
                           <div
                             className="flex items-center rounded-xl border border-stone-200 bg-white shadow-xs"
-                            onClick={(event) => event.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <button
-                              onClick={() => onUpdateQuantity(item.barcode, -1)}
-                              className="grid h-8 w-8 place-items-center text-stone-400 hover:text-stone-800 active:bg-stone-50 rounded-l-xl transition-colors select-none cursor-pointer"
-                              aria-label="Diminuer la quantité"
-                            >
+                            <button onClick={() => onUpdateQuantity(item.barcode, -1)} className="grid h-8 w-8 place-items-center text-stone-400 hover:text-stone-800 active:bg-stone-50 rounded-l-xl transition-colors select-none cursor-pointer" aria-label="Diminuer">
                               <Minus className="h-3.5 w-3.5" />
                             </button>
-                            <button
-                              onClick={() => onEditQuantity(item)}
-                              className={`min-w-[28px] px-1 py-0.5 text-center font-mono text-[11px] font-extrabold tabular-nums transition-colors hover:text-indigo-650 cursor-pointer ${tone.text}`}
-                            >
+                            <button onClick={() => onEditQuantity(item)} className={`min-w-[28px] px-1 py-0.5 text-center font-mono text-[11px] font-extrabold tabular-nums transition-colors hover:text-indigo-650 cursor-pointer ${tone.text}`}>
                               <AnimatedQuantity value={item.quantity} />
                             </button>
-                            <button
-                              onClick={() => onUpdateQuantity(item.barcode, 1)}
-                              className="grid h-8 w-8 place-items-center text-stone-400 hover:text-stone-800 active:bg-stone-50 rounded-r-xl transition-colors select-none cursor-pointer"
-                              aria-label="Augmenter la quantité"
-                            >
+                            <button onClick={() => onUpdateQuantity(item.barcode, 1)} className="grid h-8 w-8 place-items-center text-stone-400 hover:text-stone-800 active:bg-stone-50 rounded-r-xl transition-colors select-none cursor-pointer" aria-label="Augmenter">
                               <Plus className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         </div>
                       </motion.article>
                     ) : (
+                      /* ── CARD (desktop) ── */
                       <motion.article
-                        initial={{ opacity: 0, y: 15 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: "-10px" }}
-                        transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                        whileHover={{ y: -3, boxShadow: "0 8px 24px -4px rgba(0,0,0,0.10)" }}
-                        className="group relative flex flex-col rounded-2xl border border-stone-200 bg-white shadow-xs hover:border-stone-300 cursor-pointer select-none overflow-hidden transition-shadow duration-200"
+                        initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                        whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-20px" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                        whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 18 } }}
+                        className={`group relative flex flex-col rounded-2xl border border-l-[3px] bg-white shadow-sm hover:shadow-xl cursor-pointer select-none overflow-hidden transition-shadow duration-200 border-stone-200/80 ${tone.accentBorder}`}
                         onClick={() => onEditProduct(item)}
+                        style={{ minHeight: 240 }}
                       >
-                        {/* Image header */}
-                        <div className="relative flex items-center justify-center bg-stone-50 border-b border-stone-100" style={{ height: 120 }}>
+                        {/* ── Image zone ── */}
+                        <div
+                          className={`relative flex items-center justify-center bg-gradient-to-b ${tone.imageBg} overflow-hidden`}
+                          style={{ height: 136 }}
+                        >
                           {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain p-3" loading="lazy" />
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="h-full w-full object-contain p-3 transition-transform duration-500 ease-out group-hover:scale-[1.08]"
+                              loading="lazy"
+                            />
                           ) : (
-                            <Package className="h-10 w-10 text-stone-200" />
-                          )}
-
-                          {/* Stock badge top-right */}
-                          <div className="absolute top-2 right-2">
-                            {renderStockBadge(item.quantity, false)}
-                          </div>
-
-                          {/* New badge top-left */}
-                          {isRecentTimestamp(item.lastUpdated) && (
-                            <div className="absolute top-2 left-2">
-                              <span className="inline-flex items-center rounded-full bg-sky-50 border border-sky-200 px-2 py-0.5 text-[9px] font-bold text-sky-700">
-                                Nouveau
-                              </span>
+                            <div className="flex flex-col items-center gap-1">
+                              <Package className="h-8 w-8 text-stone-200" />
+                              <span className="text-[9px] font-bold text-stone-300 uppercase tracking-widest">Aucune image</span>
                             </div>
                           )}
 
-                          {/* Low-stock dot indicator */}
-                          {item.quantity <= 5 && (
-                            <span className={`absolute -bottom-1 left-1/2 -translate-x-1/2 h-2 w-2 rounded-full ring-2 ring-white ${tone.dot}`} />
+                          {/* Qty badge */}
+                          <span className={`absolute top-2 right-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-black backdrop-blur-sm shadow-xs ${tone.badge}`}>
+                            {item.quantity}
+                          </span>
+
+                          {/* New badge */}
+                          {isRecentTimestamp(item.lastUpdated) && (
+                            <span className="absolute top-2 left-2 inline-flex items-center rounded-full bg-indigo-600 px-2 py-0.5 text-[9px] font-black text-white shadow-md">
+                              NEW
+                            </span>
                           )}
                         </div>
 
-                        {/* Card body */}
-                        <div className="flex flex-1 flex-col gap-2 p-3">
+                        {/* ── Body ── */}
+                        <div className="flex flex-1 flex-col p-3 gap-2">
+                          {/* Name + brand */}
                           <div className="min-w-0">
-                            <h4 className="font-extrabold text-[13px] text-stone-900 leading-snug line-clamp-2">
+                            <h4 className="font-black text-[12px] text-stone-900 leading-snug line-clamp-2 group-hover:text-indigo-700 transition-colors duration-200">
                               {renderHighlightedText(item.name, "rounded bg-amber-100 px-0.5 text-stone-950")}
                             </h4>
                             {item.brand && (
-                              <p className="mt-0.5 text-[10px] font-semibold text-stone-400 truncate">{item.brand}</p>
+                              <p className="mt-0.5 text-[10px] font-medium text-stone-400 truncate">{item.brand}</p>
                             )}
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-1 mt-auto">
+                          {/* Meta chips */}
+                          <div className="flex items-center gap-1 flex-wrap mt-auto">
+                            <span className="font-mono text-[9px] text-stone-400 tabular-nums bg-stone-100 px-1.5 py-0.5 rounded border border-stone-150 truncate max-w-[100px]">
+                              {item.barcode}
+                            </span>
                             {item.category && (
-                              <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-[9px] font-bold text-stone-500 truncate max-w-[120px]">
+                              <span className="inline-flex items-center rounded border border-stone-200 bg-stone-50 px-1.5 py-0.5 text-[9px] font-bold text-stone-500 truncate max-w-[90px]">
                                 {getCategoryLabel(item.category)}
                               </span>
                             )}
-                            <span className="ml-auto font-mono text-[9px] text-stone-350 tabular-nums">{item.barcode}</span>
                           </div>
 
-                          {/* Quantity controls */}
+                          {/* ── Footer: status + qty controls ── */}
                           <div
-                            className="flex items-center justify-between gap-2 border-t border-stone-100 pt-2.5 mt-0.5"
-                            onClick={(event) => event.stopPropagation()}
+                            className="flex items-center justify-between gap-1 border-t border-stone-100 pt-2 mt-0.5"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <span className={`text-[10px] font-bold uppercase tracking-wide ${
-                              item.quantity === 0 ? 'text-rose-500' : item.quantity <= 5 ? 'text-amber-600' : 'text-stone-400'
-                            }`}>
-                              {item.quantity === 0 ? 'Rupture' : item.quantity <= 5 ? 'Stock bas' : 'En stock'}
+                            <span className={`text-[10px] font-black uppercase tracking-wide shrink-0 ${tone.labelColor}`}>
+                              {tone.label}
                             </span>
-                            <div className="flex items-center rounded-xl border border-stone-200 bg-white shadow-xs">
+                            <div className="flex items-center rounded-xl border border-stone-200 bg-stone-50 overflow-hidden">
                               <button
                                 onClick={() => onUpdateQuantity(item.barcode, -1)}
-                                className="grid h-8 w-8 place-items-center text-stone-400 hover:text-stone-850 active:bg-stone-50 rounded-l-xl transition-colors select-none cursor-pointer"
+                                className="grid h-7 w-7 place-items-center text-stone-400 hover:text-rose-500 hover:bg-rose-50 transition-colors select-none cursor-pointer"
                                 aria-label="Diminuer la quantité"
                               >
-                                <Minus className="h-3.5 w-3.5" />
+                                <Minus className="h-3 w-3" />
                               </button>
                               <button
                                 onClick={() => onEditQuantity(item)}
-                                className={`min-w-[32px] px-2 py-0.5 text-center font-mono text-xs font-extrabold tabular-nums transition-colors hover:text-indigo-650 cursor-pointer ${tone.text}`}
+                                className={`min-w-[28px] px-1 py-0.5 text-center font-mono text-[11px] font-black tabular-nums hover:bg-indigo-50 hover:text-indigo-700 transition-colors cursor-pointer ${tone.text}`}
                               >
                                 <AnimatedQuantity value={item.quantity} />
                               </button>
                               <button
                                 onClick={() => onUpdateQuantity(item.barcode, 1)}
-                                className="grid h-8 w-8 place-items-center text-stone-400 hover:text-stone-850 active:bg-stone-50 rounded-r-xl transition-colors select-none cursor-pointer"
+                                className="grid h-7 w-7 place-items-center text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors select-none cursor-pointer"
                                 aria-label="Augmenter la quantité"
                               >
-                                <Plus className="h-3.5 w-3.5" />
+                                <Plus className="h-3 w-3" />
                               </button>
                             </div>
                           </div>

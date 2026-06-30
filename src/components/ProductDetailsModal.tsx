@@ -1,4 +1,4 @@
-import { X, Package, Pencil, ClipboardList, Barcode, Tag, Euro, Boxes, Clock, TrendingUp } from "lucide-react";
+import { X, Package, Pencil, ClipboardList, Barcode, Tag, Euro, Clock, TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { InventoryItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect } from "react";
@@ -11,44 +11,69 @@ interface ProductDetailsModalProps {
 }
 
 function formatPrice(value?: number): string {
-  if (value === undefined || value === null || Number.isNaN(value)) return "Non renseigne";
-  return `${value.toFixed(2)} EUR`;
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
+  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(value);
 }
 
 function formatDate(value: number): string {
-  if (!value) return "Non renseigne";
+  if (!value) return "Non renseigné";
   try {
     return new Intl.DateTimeFormat("fr-FR", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(value));
   } catch {
-    return "Non renseigne";
+    return "Non renseigné";
   }
 }
 
-function getStockColor(quantity: number) {
-  if (quantity === 0) return { badge: "bg-rose-50 border-rose-200 text-rose-700", label: "Rupture" };
-  if (quantity <= 5) return { badge: "bg-amber-50 border-amber-200 text-amber-700", label: "Stock bas" };
-  return { badge: "bg-emerald-50 border-emerald-200 text-emerald-700", label: "En stock" };
+function getStockStyle(quantity: number) {
+  if (quantity === 0)
+    return {
+      badge: "bg-rose-50 border-rose-200 text-rose-700",
+      label: "Rupture",
+      qtyColor: "text-rose-600",
+      heroBg: "from-rose-50/70 via-rose-25/30 to-white",
+      dot: "bg-rose-500",
+      movBg: "border-rose-200 bg-rose-50",
+      movColor: "text-rose-600",
+    };
+  if (quantity <= 5)
+    return {
+      badge: "bg-amber-50 border-amber-200 text-amber-700",
+      label: "Stock bas",
+      qtyColor: "text-amber-600",
+      heroBg: "from-amber-50/70 via-amber-25/30 to-white",
+      dot: "bg-amber-400",
+      movBg: "border-amber-200 bg-amber-50",
+      movColor: "text-amber-600",
+    };
+  return {
+    badge: "bg-emerald-50 border-emerald-200 text-emerald-700",
+    label: "En stock",
+    qtyColor: "text-emerald-600",
+    heroBg: "from-emerald-50/50 via-stone-25/20 to-white",
+    dot: "bg-emerald-500",
+    movBg: "border-emerald-200 bg-emerald-50",
+    movColor: "text-emerald-600",
+  };
 }
 
 export function ProductDetailsModal({ product, onClose, onEdit, onEditStock }: ProductDetailsModalProps) {
   const margin =
-    product.purchasePrice !== undefined &&
-    product.purchasePrice !== null &&
-    product.salesPrice !== undefined &&
-    product.salesPrice !== null
+    product.purchasePrice != null && product.salesPrice != null
       ? product.salesPrice - product.purchasePrice
       : null;
 
-  const stockStyle = getStockColor(product.quantity);
+  const marginPct =
+    margin !== null && product.purchasePrice && product.purchasePrice > 0
+      ? (margin / product.purchasePrice) * 100
+      : null;
 
-  // Close on Escape key
+  const stock = getStockStyle(product.quantity);
+
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
@@ -62,209 +87,233 @@ export function ProductDetailsModal({ product, onClose, onEdit, onEditStock }: P
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm"
+        className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal panel — full-screen on mobile, centered sheet on desktop */}
+      {/* Panel — bottom sheet mobile / centered wide modal desktop */}
       <motion.div
         key="panel"
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        initial={{ opacity: 0, y: 40, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 24, scale: 0.97 }}
-        transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        className="fixed inset-x-0 bottom-0 z-[71] flex flex-col rounded-t-3xl bg-white shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-lg sm:rounded-3xl"
+        transition={{ type: "spring", stiffness: 340, damping: 32 }}
+        className="fixed inset-x-0 bottom-0 z-[71] flex flex-col bg-white shadow-2xl rounded-t-[2rem]
+                   sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2
+                   sm:w-[90vw] sm:max-w-3xl sm:rounded-3xl"
         style={{ maxHeight: "calc(100dvh - 2rem)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Drag handle (mobile) */}
-        <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="h-1 w-10 rounded-full bg-stone-300" />
+        {/* Drag handle mobile */}
+        <div className="flex justify-center pt-3 pb-0 sm:hidden">
+          <div className="h-1 w-12 rounded-full bg-stone-200" />
         </div>
 
-        {/* Header */}
-        <header className="flex items-center justify-between gap-3 border-b border-stone-100 px-5 py-4">
-          <div className="min-w-0">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-indigo-600">
-              Fiche produit
-            </p>
-            <h2 className="mt-0.5 truncate text-base font-bold text-stone-900 leading-snug">
-              {product.name}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl border border-stone-200 bg-white text-stone-500 hover:text-stone-900 transition active:scale-95 cursor-pointer"
-            aria-label="Fermer la fiche produit"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </header>
+        {/* Close button — top right */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 z-20 grid h-8 w-8 place-items-center rounded-xl border border-stone-200 bg-white/90 backdrop-blur-sm text-stone-500 hover:text-stone-900 hover:border-stone-300 transition active:scale-95 cursor-pointer shadow-sm"
+          aria-label="Fermer"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        {/* ═══════════════════════════════════════
+            DESKTOP: two-column layout
+            MOBILE: single-column stack
+        ════════════════════════════════════════ */}
+        <div className="flex flex-col sm:flex-row flex-1 min-h-0 overflow-hidden sm:rounded-3xl">
 
-          {/* Image + stock hero */}
-          <section className="overflow-hidden rounded-2xl border border-stone-200 bg-stone-50">
-            <div className="flex min-h-48 items-center justify-center bg-white p-6">
+          {/* ── LEFT COLUMN (image + stock hero) ── */}
+          <div className={`sm:w-64 sm:flex-shrink-0 flex flex-col items-center justify-start bg-gradient-to-b ${stock.heroBg} sm:rounded-l-3xl px-5 pt-7 pb-5 sm:border-r sm:border-stone-100`}>
+
+            {/* Product image */}
+            <div className="relative mb-4 flex items-center justify-center" style={{ height: 148 }}>
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="max-h-44 w-full object-contain"
+                  className="max-h-36 w-auto max-w-[160px] object-contain drop-shadow-lg"
                 />
               ) : (
-                <div className="grid h-28 w-28 place-items-center rounded-3xl border border-dashed border-stone-300 bg-stone-50 text-stone-300">
+                <div className="grid h-28 w-28 place-items-center rounded-3xl border-2 border-dashed border-stone-200 bg-white/60 text-stone-300">
                   <Package className="h-10 w-10" />
                 </div>
               )}
             </div>
 
-            <div className="border-t border-stone-200 bg-white px-4 py-3 space-y-3">
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
-                  {product.category || "Non classé"}
+            {/* Name + badges */}
+            <h2 className="text-center text-[13px] font-black text-stone-900 leading-snug px-1 mb-3">
+              {product.name}
+            </h2>
+            <div className="flex flex-wrap justify-center gap-1.5 mb-5">
+              {product.brand && (
+                <span className="inline-flex items-center rounded-full bg-white/80 border border-stone-200 px-2.5 py-0.5 text-[10px] font-bold text-stone-600 shadow-xs">
+                  {product.brand}
                 </span>
-                {product.brand && (
-                  <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-600">
-                    {product.brand}
-                  </span>
-                )}
-                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${stockStyle.badge}`}>
-                  {stockStyle.label}
+              )}
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-200/50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                <Tag className="h-2.5 w-2.5" />
+                {product.category || "Non classé"}
+              </span>
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${stock.badge}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${stock.dot}`} />
+                {stock.label}
+              </span>
+            </div>
+
+            {/* Stock qty card */}
+            <div className="w-full rounded-2xl border border-white/80 bg-white shadow-md px-4 py-4">
+              <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Stock actuel</p>
+              <div className="flex items-end gap-2">
+                <span className={`text-5xl font-black tabular-nums leading-none ${stock.qtyColor}`}>
+                  {product.quantity}
                 </span>
+                <span className="text-sm font-bold text-stone-400 mb-1 leading-none">unités</span>
               </div>
 
-              {/* Stock counter */}
-              <div className="flex items-center justify-between rounded-2xl bg-stone-50 px-4 py-3">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Stock actuel</p>
-                  <p className="mt-1 text-3xl font-black text-stone-900">{product.quantity}</p>
-                </div>
-                {typeof product.lastMovement === "number" && (
-                  <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm border border-stone-100">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                      Dernier mouvement
-                    </p>
-                    <p className={`mt-1 text-sm font-bold ${product.lastMovement >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                      {product.lastMovement > 0 ? "+" : ""}
-                      {product.lastMovement}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* Info cards */}
-          <section className="grid grid-cols-1 gap-3">
-
-            {/* Identification */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Barcode className="h-4 w-4 text-stone-400" />
-                <h3 className="text-sm font-bold text-stone-900">Identification</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Code-barres</p>
-                  <p className="mt-1 font-mono text-xs text-stone-800 break-all">{product.barcode}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Marque</p>
-                  <p className="mt-1 text-stone-700 text-xs">{product.brand || "Non renseignée"}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Nom complet</p>
-                  <p className="mt-1 font-semibold text-stone-800 text-xs">{product.name}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Tarifs */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Euro className="h-4 w-4 text-stone-400" />
-                <h3 className="text-sm font-bold text-stone-900">Tarifs</h3>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-xl bg-stone-50 p-3 text-center">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-stone-400">Achat</p>
-                  <p className="mt-1 text-xs font-bold text-stone-800">{formatPrice(product.purchasePrice)}</p>
-                </div>
-                <div className="rounded-xl bg-stone-50 p-3 text-center">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-stone-400">Vente</p>
-                  <p className="mt-1 text-xs font-bold text-stone-800">{formatPrice(product.salesPrice)}</p>
-                </div>
-                <div className="rounded-xl bg-stone-50 p-3 text-center">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-stone-400">Marge</p>
-                  <p className={`mt-1 text-xs font-bold ${margin === null ? "text-stone-500" : margin >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                    {margin === null ? "—" : `${margin.toFixed(2)} EUR`}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Suivi */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Boxes className="h-4 w-4 text-stone-400" />
-                <h3 className="text-sm font-bold text-stone-900">Suivi</h3>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-start gap-3 rounded-xl bg-stone-50 p-3">
-                  <Tag className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-stone-400" />
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Catégorie</p>
-                    <p className="mt-0.5 text-xs text-stone-700">{product.category || "Non classé"}</p>
+              {typeof product.lastMovement === "number" && (
+                <div className={`mt-3 flex items-center justify-between rounded-xl border px-3 py-2 ${stock.movBg}`}>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-stone-400">Dernier mvt</span>
+                  <div className="flex items-center gap-1">
+                    {product.lastMovement > 0 ? (
+                      <ArrowUp className={`h-3 w-3 ${stock.movColor}`} />
+                    ) : product.lastMovement < 0 ? (
+                      <ArrowDown className="h-3 w-3 text-rose-600" />
+                    ) : null}
+                    <span className={`text-sm font-black tabular-nums ${
+                      product.lastMovement > 0 ? "text-emerald-600"
+                      : product.lastMovement < 0 ? "text-rose-600"
+                      : "text-stone-500"
+                    }`}>
+                      {product.lastMovement > 0 ? "+" : ""}{product.lastMovement}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 rounded-xl bg-stone-50 p-3">
-                  <TrendingUp className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-stone-400" />
+              )}
+            </div>
+          </div>
+
+          {/* ── RIGHT COLUMN (details + footer) ── */}
+          <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+
+            {/* Scrollable detail sections */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-3">
+
+              {/* Tarifs */}
+              <div className="rounded-2xl border border-stone-200/80 bg-white overflow-hidden shadow-xs">
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stone-100 bg-stone-50/70">
+                  <Euro className="h-3.5 w-3.5 text-stone-400" />
+                  <h3 className="text-[10px] font-black uppercase tracking-wider text-stone-500">Tarifs</h3>
+                </div>
+                <div className="grid grid-cols-3 divide-x divide-stone-100">
+                  {[
+                    { label: "Achat", value: formatPrice(product.purchasePrice), color: "text-stone-800" },
+                    { label: "Vente", value: formatPrice(product.salesPrice), color: "text-stone-800" },
+                    {
+                      label: "Marge",
+                      value: margin === null ? "—" : formatPrice(margin),
+                      color: margin === null ? "text-stone-400" : margin >= 0 ? "text-emerald-600" : "text-rose-600",
+                      sub: marginPct !== null ? `${marginPct >= 0 ? "+" : ""}${marginPct.toFixed(1)}%` : undefined,
+                      subColor: marginPct !== null && marginPct >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50",
+                    },
+                  ].map(({ label, value, color, sub, subColor }) => (
+                    <div key={label} className="flex flex-col items-center px-3 py-4 gap-1">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-stone-400">{label}</p>
+                      <p className={`text-sm font-black ${color}`}>{value}</p>
+                      {sub && (
+                        <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.5 ${subColor}`}>{sub}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Identification */}
+              <div className="rounded-2xl border border-stone-200/80 bg-white overflow-hidden shadow-xs">
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stone-100 bg-stone-50/70">
+                  <Barcode className="h-3.5 w-3.5 text-stone-400" />
+                  <h3 className="text-[10px] font-black uppercase tracking-wider text-stone-500">Identification</h3>
+                </div>
+                <div className="px-4 py-3.5 space-y-3">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Variation récente</p>
-                    <p className="mt-0.5 text-xs text-stone-700">
+                    <p className="text-[9px] font-black uppercase tracking-wider text-stone-400">Nom complet</p>
+                    <p className="mt-1 text-xs font-semibold text-stone-800 leading-relaxed">{product.name}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-wider text-stone-400">Marque</p>
+                      <p className="mt-1 text-xs font-semibold text-stone-700">{product.brand || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-wider text-stone-400">Code-barres</p>
+                      <p className="mt-1 font-mono text-[11px] text-stone-800 bg-stone-50 rounded-lg px-2 py-1 border border-stone-100 break-all">
+                        {product.barcode}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Historique */}
+              <div className="rounded-2xl border border-stone-200/80 bg-white overflow-hidden shadow-xs">
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stone-100 bg-stone-50/70">
+                  <Clock className="h-3.5 w-3.5 text-stone-400" />
+                  <h3 className="text-[10px] font-black uppercase tracking-wider text-stone-500">Historique</h3>
+                </div>
+                <div className="divide-y divide-stone-100">
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-3.5 w-3.5 text-stone-400" />
+                      <p className="text-[10px] font-bold text-stone-500">Variation récente</p>
+                    </div>
+                    <p className={`text-xs font-bold ${
+                      typeof product.lastMovement === "number"
+                        ? product.lastMovement > 0 ? "text-emerald-600" : product.lastMovement < 0 ? "text-rose-600" : "text-stone-500"
+                        : "text-stone-400"
+                    }`}>
                       {typeof product.lastMovement === "number"
                         ? `${product.lastMovement > 0 ? "+" : ""}${product.lastMovement}`
-                        : "Non renseignée"}
+                        : "—"}
                     </p>
                   </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-xl bg-stone-50 p-3">
-                  <Clock className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-stone-400" />
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Dernière mise à jour</p>
-                    <p className="mt-0.5 text-xs text-stone-700">{formatDate(product.lastUpdated)}</p>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-stone-400" />
+                      <p className="text-[10px] font-bold text-stone-500">Dernière mise à jour</p>
+                    </div>
+                    <p className="text-xs font-semibold text-stone-700">{formatDate(product.lastUpdated)}</p>
                   </div>
                 </div>
               </div>
             </div>
-          </section>
-        </div>
 
-        {/* Footer actions */}
-        <footer className="border-t border-stone-100 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3.5">
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={onEditStock}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white shadow-md shadow-indigo-600/20 transition active:scale-[0.98] hover:bg-indigo-700 select-none cursor-pointer"
-            >
-              <ClipboardList className="h-4 w-4" />
-              Ajuster stock
-            </button>
-            <button
-              type="button"
-              onClick={onEdit}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 text-xs font-bold text-stone-700 hover:text-stone-900 hover:border-stone-300 transition active:scale-[0.98] select-none cursor-pointer"
-            >
-              <Pencil className="h-4 w-4" />
-              Modifier
-            </button>
+            {/* ── Footer actions ── */}
+            <footer className="border-t border-stone-100 bg-white px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 sm:rounded-br-3xl">
+              <div className="grid grid-cols-2 gap-2.5">
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  type="button"
+                  onClick={onEditStock}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-700 select-none cursor-pointer"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Ajuster stock
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  type="button"
+                  onClick={onEdit}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-4 text-xs font-bold text-stone-700 hover:text-stone-900 hover:border-stone-300 hover:bg-stone-50 transition select-none cursor-pointer shadow-xs"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Modifier infos
+                </motion.button>
+              </div>
+            </footer>
           </div>
-        </footer>
+        </div>
       </motion.div>
     </AnimatePresence>
   );
