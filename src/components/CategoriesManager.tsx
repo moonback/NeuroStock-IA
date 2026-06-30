@@ -7,6 +7,7 @@ import { suggestCategory } from '../lib/autoCategorization';
 import { syncInventoryItem } from '../lib/inventorySync';
 import { triggerHaptic } from '../lib/haptics';
 import { ConfirmModal } from './ui/ConfirmModal';
+import { CategoryModal } from './CategoryModal';
 
 interface CategoriesManagerProps {
   categories: CategoryItem[];
@@ -28,94 +29,66 @@ export function CategoriesManager({
   onRefreshInventory,
   showToast,
 }: CategoriesManagerProps) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
 
-  // Form states
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState('📦');
-  const [isLoading, setIsLoading] = useState(false);
+  // Modal create/edit
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
+
+  // Auto categorize
   const [isAutoCategorizing, setIsAutoCategorizing] = useState(false);
 
   // Confirm modal
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const pendingDeleteCategory = categories.find((c) => c.id === confirmDeleteId) ?? null;
 
-  const handleSave = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-
-    setIsLoading(true);
-    triggerHaptic('light');
-
-    try {
-      const categoryToSave: CategoryItem = {
-        name: name.trim(),
-        icon: icon.trim() || undefined,
-      };
-
-      if (editingCategory) {
-        categoryToSave.id = editingCategory.id;
-      }
-
-      const previousCategoryName = editingCategory?.name;
-
-      await upsertCategory(categoryToSave);
-
-      let renamedProductsCount = 0;
-      if (previousCategoryName && previousCategoryName !== categoryToSave.name) {
-        const previousNameLower = previousCategoryName.trim().toLowerCase();
-        const productsToRename = inventory.filter(
-          (item) => item.category?.trim().toLowerCase() === previousNameLower,
-        );
-
-        for (const item of productsToRename) {
-          await syncInventoryItem({
-            ...item,
-            category: categoryToSave.name,
-            lastUpdated: Date.now(),
-          });
-          renamedProductsCount++;
-        }
-      }
-
-      showToast(
-        editingCategory
-          ? renamedProductsCount > 0
-            ? `Catégorie modifiée et ${renamedProductsCount} produit(s) déplacé(s) !`
-            : 'Catégorie modifiée !'
-          : 'Catégorie créée !',
-      );
-      if (previousCategoryName && selectedCategoryName === previousCategoryName) {
-        setSelectedCategoryName(categoryToSave.name);
-      }
-
-      setName('');
-      setIcon('📦');
-      setIsAdding(false);
-      setEditingCategory(null);
-      await onRefreshCategories();
-      if (renamedProductsCount > 0) {
-        await onRefreshInventory();
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Erreur lors de la sauvegarde de la catégorie.');
-    } finally {
-      setIsLoading(false);
-    }
+  const openCreateModal = () => {
+    setEditingCategory(null);
+    setIsModalOpen(true);
   };
 
-  const handleEdit = (category: CategoryItem) => {
+  const openEditModal = (category: CategoryItem) => {
     setEditingCategory(category);
-    setName(category.name);
-    setIcon(category.icon || '📦');
-    setIsAdding(true);
+    setIsModalOpen(true);
   };
 
-  const openDeleteConfirm = (category: CategoryItem) => {
-    setConfirmDeleteId(category.id ?? category.name);
+  const handleSave = async (categoryToSave: CategoryItem) => {
+    const previousCategoryName = editingCategory?.name;
+
+    await upsertCategory(categoryToSave);
+
+    let renamedProductsCount = 0;
+    if (previousCategoryName && previousCategoryName !== categoryToSave.name) {
+      const previousNameLower = previousCategoryName.trim().toLowerCase();
+      const productsToRename = inventory.filter(
+        (item) => item.category?.trim().toLowerCase() === previousNameLower,
+      );
+
+      for (const item of productsToRename) {
+        await syncInventoryItem({
+          ...item,
+          category: categoryToSave.name,
+          lastUpdated: Date.now(),
+        });
+        renamedProductsCount++;
+      }
+    }
+
+    showToast(
+      editingCategory
+        ? renamedProductsCount > 0
+          ? `Catégorie modifiée et ${renamedProductsCount} produit(s) déplacé(s) !`
+          : 'Catégorie modifiée !'
+        : 'Catégorie créée !',
+    );
+    if (previousCategoryName && selectedCategoryName === previousCategoryName) {
+      setSelectedCategoryName(categoryToSave.name);
+    }
+
+    await onRefreshCategories();
+    if (renamedProductsCount > 0) {
+      await onRefreshInventory();
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -180,6 +153,7 @@ export function CategoriesManager({
 
   return (
     <section className="space-y-4">
+      {/* Header */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -194,112 +168,19 @@ export function CategoriesManager({
                 </span>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:flex">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAdding(true);
-                  setEditingCategory(null);
-                  setName('');
-                  setIcon('📦');
-                }}
-                className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-2 text-[10px] font-black text-white shadow-md shadow-indigo-600/15 transition hover:bg-indigo-700 active:scale-[0.98] select-none cursor-pointer sm:flex-none"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Nouvelle
-              </button>
-            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:flex">
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-2 text-[10px] font-black text-white shadow-md shadow-indigo-600/15 transition hover:bg-indigo-700 active:scale-[0.98] select-none cursor-pointer sm:flex-none"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Nouvelle
+            </button>
           </div>
         </div>
       </div>
-
-      {/* Add / Edit Category Dialog */}
-      <AnimatePresence>
-        {isAdding && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <form onSubmit={handleSave} className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
-                  {editingCategory ? 'Modifier la catégorie' : 'Créer une catégorie'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsAdding(false)}
-                  className="p-2 -mr-2 -mt-2 text-slate-400 hover:text-slate-900 rounded-xl"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-4 gap-3">
-                <div className="col-span-1">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Icône</label>
-                  <input
-                    type="text"
-                    maxLength={2}
-                    value={icon}
-                    onChange={(e) => setIcon(e.target.value)}
-                    className="w-full h-10 text-center rounded-xl text-lg border border-slate-200 bg-white outline-none transition"
-                    placeholder="📦"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Nom de la catégorie *</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl text-xs font-semibold text-slate-900 outline-none transition border border-slate-200 bg-white"
-                    placeholder="Ex: Épicerie, Boissons..."
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Common Emojis Quick Picker */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Suggestions d&apos;icônes</label>
-                <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto p-1 bg-white rounded-xl border border-slate-200">
-                  {COMMON_EMOJIS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setIcon(emoji)}
-                      className={`h-9 w-9 flex items-center justify-center rounded-lg text-base transition hover:bg-slate-100 ${icon === emoji ? 'bg-indigo-50 border border-indigo-200' : ''}`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex gap-2 justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAdding(false)}
-                  className="h-11 px-4 text-[10px] font-bold text-slate-500 bg-transparent border border-slate-200 hover:bg-slate-50 rounded-2xl transition"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading || !name.trim()}
-                  className="h-11 px-4 text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl transition flex items-center gap-1 shadow-md shadow-indigo-600/20 disabled:opacity-40"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  Sauvegarder
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Categories Grid List */}
       {categories.length === 0 ? (
@@ -319,121 +200,158 @@ export function CategoriesManager({
             return (
               <div
                 key={category.id || category.name}
-                className={`relative rounded-xl border bg-white shadow-xs transition group ${isSelected ? 'border-indigo-300 shadow-sm ring-2 ring-indigo-100' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'}`}
+                className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs"
+                style={{ touchAction: 'pan-y' }}
               >
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategoryName(isSelected ? null : category.name)}
-                  className="flex min-h-[4.25rem] w-full items-center justify-between p-3 pr-20 text-left"
-                  aria-expanded={isSelected}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-lg border border-slate-200">
-                      {category.icon || '📦'}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-800">{category.name}</h4>
-                      <span className="text-[10px] font-bold text-slate-400 font-mono tabular">
-                        {count} {count > 1 ? 'articles' : 'article'}
-                      </span>
-                    </div>
+                {/* Swipe background */}
+                <div className="absolute inset-0 flex items-stretch">
+                  <div className="w-28 bg-indigo-500 flex items-center justify-start pl-4 rounded-l-2xl">
+                    <Edit2 className="w-5 h-5 text-white" />
                   </div>
-                </button>
-
-                <div className="absolute right-3 top-3 flex items-center gap-1 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleEdit(category);
-                    }}
-                    className="h-10 w-10 flex items-center justify-center text-slate-400 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition"
-                    title="Modifier"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openDeleteConfirm(category);
-                    }}
-                    className="h-10 w-10 flex items-center justify-center text-rose-500 hover:text-rose-700 rounded-xl hover:bg-rose-50 transition"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex-1 bg-rose-500 flex items-center justify-center rounded-r-2xl">
+                    <Trash2 className="w-5 h-5 text-white" />
+                  </div>
                 </div>
 
-                <AnimatePresence initial={false}>
-                  {isSelected && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="border-t border-slate-100 px-3 pb-3 pt-2">
-                        <div className="mb-2 flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            Produits associés
-                          </span>
-                          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600">
-                            {associatedProducts.length}
-                          </span>
-                        </div>
-
-                        {associatedProducts.length === 0 ? (
-                          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-3 py-4 text-center text-[10px] font-semibold text-slate-400">
-                            Aucun produit dans cette catégorie.
-                          </div>
-                        ) : (
-                          <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-                            {associatedProducts.map((item) => (
-                              <div
-                                key={item.barcode}
-                                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-2"
-                              >
-                                <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl border border-slate-200 bg-white p-1">
-                                  {item.imageUrl ? (
-                                    <img
-                                      src={item.imageUrl}
-                                      alt={item.name}
-                                      className="h-full w-full rounded object-contain"
-                                    />
-                                  ) : (
-                                    <Package className="h-4 w-4 text-slate-300" />
-                                  )}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <h5 className="line-clamp-1 text-[11px] font-bold text-slate-800">
-                                    {item.name}
-                                  </h5>
-                                  <p className="mt-0.5 truncate font-mono text-[10px] text-slate-400">
-                                    {item.barcode}{item.brand ? ` • ${item.brand}` : ''}
-                                  </p>
-                                </div>
-                                <span className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-mono text-[10px] font-bold tabular text-indigo-600">
-                                  x{item.quantity}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                {/* Foreground card */}
+                <motion.div
+                  drag="x"
+                  dragConstraints={{ left: -120, right: 0 }}
+                  dragElastic={0.08}
+                  onDragEnd={(_: any, info: any) => {
+                    if (info.offset.x < -70) {
+                      triggerHaptic('light');
+                      openEditModal(category);
+                    } else if (info.offset.x > 70) {
+                      triggerHaptic('warning');
+                      setConfirmDeleteId(category.id ?? category.name);
+                    }
+                  }}
+                  onClick={() => setSelectedCategoryName(isSelected ? null : category.name)}
+                  className="relative z-10 bg-white border-0"
+                  whileTap={{ cursor: 'grabbing' }}
+                >
+                  <div className="flex min-h-[4.25rem] w-full items-center justify-between p-3 pr-20">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-lg border border-slate-200">
+                        {category.icon || '📦'}
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800">{category.name}</h4>
+                        <span className="text-[10px] font-bold text-slate-400 font-mono tabular">
+                          {count} {count > 1 ? 'articles' : 'article'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hover actions (desktop) */}
+                  <div className="absolute right-3 top-3 flex items-center gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openEditModal(category);
+                      }}
+                      className="h-9 w-9 flex items-center justify-center text-slate-400 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition"
+                      title="Modifier"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        triggerHaptic('warning');
+                        setConfirmDeleteId(category.id ?? category.name);
+                      }}
+                      className="h-9 w-9 flex items-center justify-center text-rose-500 hover:text-rose-700 rounded-xl hover:bg-rose-50 transition"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <AnimatePresence initial={false}>
+                    {isSelected && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-slate-100 px-3 pb-3 pt-2">
+                          <div className="mb-2 flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Produits associés
+                            </span>
+                            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600">
+                              {associatedProducts.length}
+                            </span>
+                          </div>
+
+                          {associatedProducts.length === 0 ? (
+                            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-3 py-4 text-center text-[10px] font-semibold text-slate-400">
+                              Aucun produit dans cette catégorie.
+                            </div>
+                          ) : (
+                            <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                              {associatedProducts.map((item) => (
+                                <div
+                                  key={item.barcode}
+                                  className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-2"
+                                >
+                                  <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl border border-slate-200 bg-white p-1">
+                                    {item.imageUrl ? (
+                                      <img
+                                        src={item.imageUrl}
+                                        alt={item.name}
+                                        className="h-full w-full rounded object-contain"
+                                      />
+                                    ) : (
+                                      <Package className="h-4 w-4 text-slate-300" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <h5 className="line-clamp-1 text-[11px] font-bold text-slate-800">
+                                      {item.name}
+                                    </h5>
+                                    <p className="mt-0.5 truncate font-mono text-[10px] text-slate-400">
+                                      {item.barcode}{item.brand ? ` • ${item.brand}` : ''}
+                                    </p>
+                                  </div>
+                                  <span className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-mono text-[10px] font-bold tabular text-indigo-600">
+                                    x{item.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               </div>
             );
           })}
         </div>
       )}
 
+      {/* Modal create/edit */}
+      <CategoryModal
+        isOpen={isModalOpen}
+        category={editingCategory}
+        categoryId={editingCategory?.id ?? 'create'}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSave}
+        showToast={showToast}
+      />
+
       {/* Confirm delete */}
       <ConfirmModal
         isOpen={!!confirmDeleteId}
-        title="Supprimer la catégorie ?"
+        title={pendingDeleteCategory ? `Supprimer "${pendingDeleteCategory.name}" ?` : 'Supprimer la catégorie ?'}
         message={
           pendingDeleteCategory
             ? pendingDeleteCategory.icon
