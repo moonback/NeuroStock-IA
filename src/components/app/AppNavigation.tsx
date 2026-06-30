@@ -3,7 +3,7 @@ import { Bot, Package, Scan, Store, Tags, Zap, ShoppingCart, Power } from "lucid
 import { useGeminiAssistant } from "../../hooks/useGeminiAssistant";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { quitApp } from "../../lib/electronUtils";
+import { QuitConfirmModal } from "../QuitConfirmModal";
 
 export type AppTab = "scan" | "autoScan" | "stock" | "categories" | "pos";
 
@@ -45,6 +45,7 @@ export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
   const assistant = useGeminiAssistant();
   const isAssistantActive = assistant.isOpen && !assistant.isMinimized;
   const isDesktop = useIsDesktop();
+  const [showQuitModal, setShowQuitModal] = useState(false);
 
   if (isDesktop) {
     return (
@@ -130,7 +131,7 @@ export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
             <div className="sidebar-divider mb-1" />
             <button
               type="button"
-              onClick={() => quitApp()}
+              onClick={() => setShowQuitModal(true)}
               aria-label="Quitter l'application"
               title="Quitter"
               className="sidebar-nav-item w-full group/quit hover:!bg-red-50/80 hover:!border-red-200/60"
@@ -142,6 +143,7 @@ export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
             </button>
           </div>
         </aside>
+        <QuitConfirmModal isOpen={showQuitModal} onClose={() => setShowQuitModal(false)} />
       </div>
     );
   }
