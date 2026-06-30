@@ -803,6 +803,26 @@ export default function App() {
     }
   }, [categories, selectedCategory]);
 
+  useEffect(() => {
+    if (!actionModal || !actionModal.product?.barcode) return;
+    const barcode = actionModal.product.barcode;
+    const refreshed = inventory.find((item) => item.barcode === barcode);
+    if (!refreshed) return;
+
+    setActionModal((prev) => {
+      if (!prev) return prev;
+      switch (prev.type) {
+        case 'product_details':
+        case 'edit':
+        case 'quantity':
+        case 'scan_choice':
+          return { ...prev, product: refreshed };
+        default:
+          return prev;
+      }
+    });
+  }, [inventory, actionModal]);
+
   const filteredInventory = useMemo(() => {
     let result = [...inventory];
 
