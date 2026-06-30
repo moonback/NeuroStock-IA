@@ -1,11 +1,11 @@
 import type React from "react";
-import { Bot, Package, Scan, Store, Tags, ShoppingCart, Power, Settings } from "lucide-react";
+import { Bot, Package, Scan, Store, Tags, ShoppingCart, Power, BarChart3, Settings } from "lucide-react";
 import { useGeminiAssistant } from "../../hooks/useGeminiAssistant";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { QuitConfirmModal } from "../QuitConfirmModal";
 
-export type AppTab = "scan" | "stock" | "categories" | "pos" | "settings";
+export type AppTab = "scan" | "stock" | "categories" | "pos" | "dashboard" | "settings";
 
 type NavItem = {
   tab: AppTab;
@@ -18,7 +18,9 @@ const navItems: NavItem[] = [
   { tab: "stock", label: "Stock", icon: Package },
   { tab: "categories", label: "Catégories", icon: Tags },
   { tab: "pos", label: "Ajouter stock", icon: ShoppingCart },
-  { tab: "settings", label: "Paramètres", icon: Settings },
+  { tab: "dashboard", label: "Analyse", icon: BarChart3 },
+  // { tab: "settings", label: "Parametre", icon: Settings }
+
 ];
 
 type AppNavigationProps = {

@@ -1,4 +1,4 @@
-import { Store, Download, LogOut, CloudOff, CloudUpload, RefreshCw, Brain, Pause, Play, X, Package, HelpCircle, TrendingUp, AlertTriangle, User } from 'lucide-react';
+import { Store, Download, LogOut, CloudOff, CloudUpload, RefreshCw, Brain, Pause, Play, X, Package, HelpCircle, TrendingUp, AlertTriangle, User, Settings } from 'lucide-react';
 import type { useEmbeddingGenerator } from '../hooks/useEmbeddingGenerator';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
@@ -18,6 +18,7 @@ interface HeaderProps {
   onLogout: () => void;
   onSyncNow?: () => void;
   onRequestVectorize?: () => void;
+  onOpenSettings?: () => void;
   embeddingGenerator: ReturnType<typeof useEmbeddingGenerator>;
 }
 
@@ -48,6 +49,7 @@ export function Header({
   onLogout,
   onSyncNow,
   onRequestVectorize,
+  onOpenSettings,
   embeddingGenerator,
 }: HeaderProps) {
   const { isRunning, isPaused, progress, start, pause, resume, stop, canStart, currentProductName, embeddedCount } = embeddingGenerator;
@@ -193,6 +195,20 @@ export function Header({
                 <HelpCircle className="h-3.5 w-3.5" />
                 {isDesktop && <span className="text-[11px] font-bold">Aide</span>}
               </motion.button>
+
+              {onOpenSettings && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onOpenSettings}
+                  aria-label="Paramètres"
+                  className={`touch-target grid place-items-center rounded-xl border border-stone-200 bg-white text-stone-500 shadow-xs transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 ${isDesktop ? 'h-7 px-2 flex items-center gap-1.5 w-auto' : 'h-10 w-10'
+                    }`}
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  {isDesktop && <span className="text-[11px] font-bold">Paramètres</span>}
+                </motion.button>
+              )}
 
               {showExport && (
                 <div className="relative">

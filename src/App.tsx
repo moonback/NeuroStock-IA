@@ -38,6 +38,7 @@ import { ScanTab } from "./components/app/ScanTab";
 import { StockTab } from "./components/app/StockTab";
 import { POSTab } from "./components/app/POSTab";
 import { SettingsTab } from "./components/app/SettingsTab";
+import { DashboardTab } from "./components/app/DashboardTab";
 import { SyncNotice } from "./components/app/SyncNotice";
 import { GeminiAssistantProvider } from "./providers/GeminiAssistantProvider";
 import { generateProductEmbedding, fullSemanticSearch } from "./lib/embeddingService";
@@ -1404,6 +1405,7 @@ export default function App() {
               onLogout={handleLogout}
               onSyncNow={() => void flushQueue()}
               onRequestVectorize={() => setShowVectorizeConfirm(true)}
+              onOpenSettings={() => setActiveTab("settings")}
               embeddingGenerator={embeddingGenerator}
             />
 
@@ -1417,7 +1419,9 @@ export default function App() {
             />
 
             {/* Content Tabs */}
-            {activeTab === "scan" ? (
+            {activeTab === "dashboard" ? (
+              <DashboardTab inventory={inventory} dbCategories={dbCategories} />
+            ) : activeTab === "scan" ? (
               <ScanTab
                 isOnline={isOnline}
                 pendingCount={pendingCount}
