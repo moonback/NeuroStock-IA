@@ -77,7 +77,8 @@ function findInventoryItemForAssistant(
   items: InventoryItem[],
   args: Record<string, unknown>,
 ): { item: InventoryItem | null; ambiguousMatches: InventoryItem[] } {
-  const barcode = String(args.barcode ?? "").trim();
+  const rawBarcode = String(args.barcode ?? "").trim();
+  const barcode = rawBarcode.replace(/^cb:/i, "");
   const rawQuery = String(args.query ?? args.name ?? "").trim();
   const query = normalizeAssistantQuery(rawQuery);
 
@@ -1123,9 +1124,12 @@ export default function App() {
             }
 
             const isAbsoluteSet = mode === 'set' || mode === 'absolute' || mode === 'mets_a';
+            const isRemove = mode === 'remove' || mode === 'retire' || mode === 'supprime';
             const nextQuantity = isAbsoluteSet
               ? Math.max(0, requestedQuantity)
-              : Math.max(0, item.quantity + requestedQuantity);
+              : Math.max(0, isRemove
+                  ? item.quantity - requestedQuantity
+                  : item.quantity + requestedQuantity);
             const movement = nextQuantity - item.quantity;
             const updatedItem = { ...item, quantity: nextQuantity, lastUpdated: Date.now(), lastMovement: movement };
             console.log('[assistant][updateStock] before sync', { barcode: item.barcode, oldQuantity: item.quantity, newQuantity: updatedItem.quantity, movement, mode });
