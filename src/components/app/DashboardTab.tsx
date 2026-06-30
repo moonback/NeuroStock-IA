@@ -63,7 +63,6 @@ function HorizontalBar({
   value,
   max,
   color,
-  key,
 }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
