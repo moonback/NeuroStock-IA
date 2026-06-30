@@ -13,7 +13,7 @@ export const GeminiAssistantContext = createContext<GeminiAssistantContextValue 
 
 const emptyContext = async (): Promise<AssistantExternalContext> => ({ language: 'français', offlineMode: !navigator.onLine });
 
-export function GeminiAssistantProvider({ children, getContext = emptyContext, toolHandlers = {}, autoRender = true }: GeminiAssistantProviderProps) {
+export function GeminiAssistantProvider({ children, getContext = emptyContext, toolHandlers = {}, autoRender = true, assistantName = 'Lina' }: GeminiAssistantProviderProps) {
   const [state, setState] = useState(AssistantState.Idle);
   const [isOpen, setOpen] = useState(false);
   const [isMinimized, setMinimized] = useState(false);
@@ -133,7 +133,7 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
   return (
     <GeminiAssistantContext.Provider value={value}>
       {children}
-      {autoRender && <GeminiAssistant state={state} isOpen={isOpen} isMinimized={isMinimized} isMuted={isMuted} error={error} autoAccept={autoAccept} setAutoAccept={setAutoAccept} permission={permission} onOpen={() => void open()} onClose={() => void close()} onMinimize={minimize} onMuteToggle={isMuted ? unmute : mute} onStop={() => void stop()} onPermission={resolvePermission} />}
+      {autoRender && <GeminiAssistant state={state} isOpen={isOpen} isMinimized={isMinimized} isMuted={isMuted} error={error} autoAccept={autoAccept} setAutoAccept={setAutoAccept} permission={permission} onOpen={() => void open()} onClose={() => void close()} onMinimize={minimize} onMuteToggle={isMuted ? unmute : mute} onStop={() => void stop()} onPermission={resolvePermission} assistantName={assistantName} />}
     </GeminiAssistantContext.Provider>
   );
 }

@@ -21,6 +21,7 @@ import {
   syncDeleteInventoryItem,
 } from "./lib/inventorySync";
 import { fetchCategories, upsertCategory } from "./lib/supabaseCategories";
+import { fetchSetting, upsertSetting } from "./lib/supabaseSettings";
 import { CategoriesManager } from "./components/CategoriesManager";
 import { suggestCategory } from "./lib/autoCategorization";
 import { getSession, signOut, UserSession } from "./lib/supabaseAuth";
@@ -36,6 +37,7 @@ import { CategoryFilterModal } from "./components/app/CategoryFilterModal";
 import { ScanTab } from "./components/app/ScanTab";
 import { StockTab } from "./components/app/StockTab";
 import { POSTab } from "./components/app/POSTab";
+import { SettingsTab } from "./components/app/SettingsTab";
 import { SyncNotice } from "./components/app/SyncNotice";
 import { GeminiAssistantProvider } from "./providers/GeminiAssistantProvider";
 import { generateProductEmbedding, fullSemanticSearch } from "./lib/embeddingService";
@@ -166,6 +168,10 @@ export default function App() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [scannerInputMode, setScannerInputMode] = useState<ScannerInputMode>("hardware");
+  const [assistantName, setAssistantName] = useState<string>("Lina");
+  const [isAssistantNameLoaded, setIsAssistantNameLoaded] = useState(false);
+  const [cameraEnabled, setCameraEnabled] = useState<boolean>(true);
+  const [isCameraEnabledLoaded, setIsCameraEnabledLoaded] = useState(false);
   const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
   const [showVectorizeConfirm, setShowVectorizeConfirm] = useState(false);
   const [assistantRecentProduct, setAssistantRecentProduct] = useState<InventoryItem | null>(null);
@@ -179,6 +185,90 @@ export default function App() {
   useEffect(() => {
     assistantRecentProductRef.current = assistantRecentProduct;
   }, [assistantRecentProduct]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAssistantName() {
+      const remote = await fetchSetting('assistant_name');
+      const remoteName = typeof remote === 'string' && remote.trim() ? remote.trim() : null;
+      const localStorageName = typeof window !== 'undefined' ? localStorage.getItem('neurostock_assistant_name') : null;
+      const name = remoteName ?? localStorageName ?? 'Lina';
+
+      if (!cancelled) {
+        setAssistantName(name);
+        setIsAssistantNameLoaded(true);
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('neurostock_assistant_name', name);
+        }
+      }
+    }
+
+    void loadAssistantName();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAssistantNameLoaded) return;
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('neurostock_assistant_name', assistantName);
+    void upsertSetting('assistant_name', assistantName);
+  }, [assistantName, isAssistantNameLoaded]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCameraEnabled() {
+      const raw = await fetchSetting('camera_enabled');
+      let remoteValue: boolean | null = null;
+
+      if (typeof raw === 'string') {
+        if (raw === '1' || raw.toLowerCase() === 'true') {
+          remoteValue = true;
+        } else if (raw === '0' || raw.toLowerCase() === 'false') {
+          remoteValue = false;
+        }
+      }
+
+      const localStorageValue = typeof window !== 'undefined'
+        ? localStorage.getItem('neurostock_camera_enabled') !== '0'
+        : null;
+
+      const value = remoteValue ?? localStorageValue ?? true;
+
+      if (!cancelled) {
+        setCameraEnabled(value);
+        setIsCameraEnabledLoaded(true);
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('neurostock_camera_enabled', value ? '1' : '0');
+        }
+      }
+    }
+
+    void loadCameraEnabled();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isCameraEnabledLoaded) return;
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('neurostock_camera_enabled', cameraEnabled ? '1' : '0');
+    void upsertSetting('camera_enabled', cameraEnabled ? '1' : '0');
+  }, [cameraEnabled, isCameraEnabledLoaded]);
+
+  useEffect(() => {
+    if (!cameraEnabled && scannerInputMode === 'camera') {
+      setScannerInputMode('hardware');
+    }
+  }, [cameraEnabled, scannerInputMode]);
 
   const showToast = useCallback((text: string) => {
     const id = Date.now();
@@ -793,14 +883,15 @@ export default function App() {
     categories: dbCategories,
     user: { email: session.email },
     storeName: "NeuroStock",
+    assistantName,
     language: "français",
     offlineMode: !isOnline,
     businessRules: [
-      "Tu es Lina",
-      "Assistant vocal d’inventaire",
+      `Tu es ${assistantName}`,
+      "Assistant vocal d'inventaire",
       "Tu réponds en français",
       "Réponses courtes",
-      "Tu n’agis que via tools",
+      "Tu n'agis que via tools",
       "Toute action destructive nécessite confirmation",
     ],
   };
@@ -809,6 +900,7 @@ export default function App() {
     <>
       <GeminiAssistantProvider
         getContext={() => assistantContext}
+        assistantName={assistantName}
         toolHandlers={{
           searchProduct: async (args) => {
             const rawQuery = String(args.query ?? "");
@@ -1295,11 +1387,12 @@ export default function App() {
         }}
       >
         <div className="app-shell text-stone-800 font-sans">
-          <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} assistantName={assistantName} />
 
           <div className="flex-1 min-w-0 flex flex-col w-full relative">
             <Header
               email={session.email}
+              assistantName={assistantName}
               inventoryLength={inventory.length}
               totalItems={totalItems}
               lowStockCount={lowStockCount}
@@ -1332,6 +1425,7 @@ export default function App() {
                 loadingBarcode={loadingBarcode}
                 actionModal={actionModal}
                 scannerInputMode={scannerInputMode}
+                cameraEnabled={cameraEnabled}
                 recentlyScanned={recentlyScanned}
                 onScannerInputModeChange={setScannerInputMode}
                 onScan={handleScan}
@@ -1386,6 +1480,13 @@ export default function App() {
               <POSTab
                 inventory={inventory}
                 onUpdateQuantity={handleUpdateQuantity}
+              />
+            ) : activeTab === "settings" ? (
+              <SettingsTab
+                cameraEnabled={cameraEnabled}
+                assistantName={assistantName}
+                onCameraEnabledChange={setCameraEnabled}
+                onAssistantNameChange={setAssistantName}
               />
             ) : (
               <CategoriesManager

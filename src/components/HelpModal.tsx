@@ -51,178 +51,11 @@ type HelpFeature = {
   tip?: string;
 };
 
-const HELP_SECTIONS: HelpSection[] = [
-  {
-    id: "scan",
-    icon: Scan,
-    title: "Onglet Scanner",
-    color: "text-indigo-600",
-    bgColor: "bg-indigo-50",
-    borderColor: "border-indigo-200",
-    badge: "Principal",
-    features: [
-      {
-        icon: Barcode,
-        title: "Scanner par code-barres (douchette)",
-        description:
-          "Connectez une douchette USB ou Bluetooth. Scannez un produit pour le retrouver instantanément dans votre inventaire ou l'ajouter s'il est nouveau. La douchette fonctionne depuis n'importe quel onglet.",
-        tip: "La douchette est toujours active — inutile d'être sur l'onglet Scanner.",
-      },
-      {
-        icon: Camera,
-        title: "Scanner par caméra",
-        description:
-          "Utilisez l'appareil photo de votre téléphone pour scanner un code-barres. Activez le mode caméra via le bouton de bascule dans l'onglet Scanner.",
-        tip: "Mode caméra idéal pour les appareils sans douchette hardware.",
-      },
-      {
-        icon: Keyboard,
-        title: "Saisie manuelle de code-barres",
-        description:
-          "Tapez directement le code-barres d'un produit si vous ne pouvez pas le scanner. Utilisez le champ de saisie manuelle affiché dans l'onglet.",
-      },
-      {
-        icon: Plus,
-        title: "Ajout d'un nouveau produit",
-        description:
-          "Quand un code-barres est inconnu, l'app cherche le produit sur OpenFoodFacts automatiquement. Si trouvé, vous choisissez la quantité. Si introuvable, un formulaire manuel s'ouvre pour saisir les infos (nom, marque, catégorie, prix).",
-      },
-      {
-        icon: Edit3,
-        title: "Modifier un produit existant",
-        description:
-          "En scannant un produit déjà en inventaire, un menu s'ouvre proposant deux actions : ajuster le stock ou modifier les informations produit (nom, marque, catégorie, prix d'achat/vente).",
-      },
-    ],
-  },
-  {
-    id: "autoScan",
-    icon: Zap,
-    title: "Scan Automatique",
-    color: "text-amber-600",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-200",
-    badge: "Rapide",
-    features: [
-      {
-        icon: Zap,
-        title: "Mode batch (scan en rafale)",
-        description:
-          "Activez le scan automatique pour traiter des dizaines de produits sans confirmation. Chaque scan ajoute ou retire automatiquement 1 unité du stock sans ouvrir aucun modal.",
-        tip: "Parfait pour les réceptions de livraison ou les inventaires rapides.",
-      },
-      {
-        icon: Plus,
-        title: "Mode Ajout (+1 par scan)",
-        description:
-          "Chaque scan ajoute +1 à la quantité du produit en stock. Si le produit est nouveau et reconnu sur OpenFoodFacts, il est créé automatiquement avec une quantité de 1.",
-      },
-      {
-        icon: Minus,
-        title: "Mode Retrait (−1 par scan)",
-        description:
-          "Chaque scan retire 1 unité du stock. Une alerte vibrante s'affiche si le stock est déjà à 0. Le stock ne peut pas passer en négatif.",
-      },
-    ],
-  },
-  {
-    id: "stock",
-    icon: Package,
-    title: "Onglet Stock",
-    color: "text-emerald-600",
-    bgColor: "bg-emerald-50",
-    borderColor: "border-emerald-200",
-    features: [
-      {
-        icon: Search,
-        title: "Recherche produits",
-        description:
-          "Recherchez par nom, marque, catégorie ou code-barres. La recherche est instantanée et insensible à la casse.",
-      },
-      {
-        icon: Filter,
-        title: "Filtres de stock",
-        description:
-          "Filtrez l'inventaire par état : \"Tous\", \"Stock faible\" (≤ 5 unités), \"Rupture\" (0 unité) ou \"En stock\" (> 5 unités). Combinez avec la recherche pour des résultats précis.",
-        tip: "Le compteur de rupture est affiché en rouge dans le header.",
-      },
-      {
-        icon: Tags,
-        title: "Filtre par catégorie",
-        description:
-          "Ouvrez le sélecteur de catégories pour n'afficher que les produits d'une catégorie donnée. Le nombre de produits par catégorie est affiché.",
-      },
-      {
-        icon: SortAsc,
-        title: "Tri de l'inventaire",
-        description:
-          "Triez par : date de mise à jour (récent d'abord), nom alphabétique, quantité croissante ou décroissante.",
-      },
-      {
-        icon: Plus,
-        title: "Ajustement rapide des quantités",
-        description:
-          "Appuyez sur les boutons + et − directement sur la carte produit pour modifier le stock d'une unité à la fois, sans ouvrir de modal.",
-      },
-      {
-        icon: Edit3,
-        title: "Édition produit depuis le stock",
-        description:
-          "Touchez une carte produit pour accéder à ses détails : modifier les informations, ajuster le stock avec saisie libre, ou supprimer l'article.",
-      },
-      {
-        icon: Trash2,
-        title: "Suppression de produit",
-        description:
-          "Supprimez un produit de l'inventaire depuis ses détails ou la carte. Une confirmation est demandée pour éviter les accidents.",
-      },
-      {
-        icon: FileText,
-        title: "Statistiques financières",
-        description:
-          "En bas de l'onglet Stock, visualisez la valeur totale d'achat, la valeur de vente potentielle et la marge brute de tout votre inventaire (si prix renseignés).",
-      },
-    ],
-  },
-  {
-    id: "categories",
-    icon: Tags,
-    title: "Gestion des Catégories",
-    color: "text-violet-600",
-    bgColor: "bg-violet-50",
-    borderColor: "border-violet-200",
-    features: [
-      {
-        icon: Tags,
-        title: "Créer une catégorie",
-        description:
-          "Ajoutez vos propres catégories personnalisées avec un nom et un emoji/icône. Ces catégories apparaissent dans les filtres et lors de l'ajout de produits.",
-      },
-      {
-        icon: Edit3,
-        title: "Renommer une catégorie",
-        description:
-          "Modifiez le nom ou l'icône d'une catégorie existante. Tous les produits associés sont automatiquement mis à jour.",
-      },
-      {
-        icon: Trash2,
-        title: "Supprimer une catégorie",
-        description:
-          "Supprimez une catégorie inutilisée. Si des produits y sont associés, ils perdront leur catégorie.",
-      },
-      {
-        icon: Brain,
-        title: "Catégorisation automatique",
-        description:
-          "Lors du scan, l'app suggère automatiquement une catégorie en analysant le nom du produit et les données OpenFoodFacts. Vous pouvez accepter ou changer la suggestion.",
-        tip: "Plus vous avez de catégories définies, meilleure est la suggestion automatique.",
-      },
-    ],
-  },
-  {
+const makeHelpSections = (assistantName: string): HelpSection[] => {
+  const assistantSection: HelpSection = {
     id: "assistant",
     icon: Bot,
-    title: "Assistant Lina (IA Vocale)",
+    title: `Assistant ${assistantName} (IA Vocale)`,
     color: "text-purple-600",
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200",
@@ -230,27 +63,23 @@ const HELP_SECTIONS: HelpSection[] = [
     features: [
       {
         icon: Bot,
-        title: "Ouvrir Lina",
-        description:
-          "Touchez l'icône \"Lina\" dans la barre de navigation. Lina est un assistant vocal alimenté par l'IA Gemini, spécialement configuré pour la gestion d'inventaire.",
+        title: `Ouvrir ${assistantName}`,
+        description: `Touchez l'icône "${assistantName}" dans la barre de navigation. ${assistantName} est un assistant vocal alimenté par l'IA Gemini, spécialement configuré pour la gestion d'inventaire.`,
       },
       {
         icon: Search,
         title: "Recherche vocale de produits",
-        description:
-          "Demandez \"Où est le Nutella ?\" ou \"Quel est le stock de lait ?\". Lina trouve le produit dans votre inventaire et vous donne les informations en temps réel.",
+        description: `Demandez \"Où est le Nutella ?\" ou \"Quel est le stock de lait ?\". ${assistantName} trouve le produit dans votre inventaire et vous donne les informations en temps réel.`,
       },
       {
         icon: Edit3,
         title: "Mise à jour vocale du stock",
-        description:
-          "Dites \"Mets le stock de Coca-Cola à 24\" ou \"Retire 5 yaourts\". Lina met à jour l'inventaire directement via commande vocale.",
+        description: `Dites \"Mets le stock de Coca-Cola à 24\" ou \"Retire 5 yaourts\". ${assistantName} met à jour l'inventaire directement via commande vocale.`,
       },
       {
         icon: Plus,
         title: "Création vocale de produit",
-        description:
-          "Créez un nouveau produit par la voix en donnant son nom, sa marque et sa quantité. Lina cherche sur OpenFoodFacts et crée le produit automatiquement.",
+        description: `Créez un nouveau produit par la voix en donnant son nom, sa marque et sa quantité. ${assistantName} cherche sur OpenFoodFacts et crée le produit automatiquement.`,
       },
       {
         icon: Tags,
@@ -261,114 +90,284 @@ const HELP_SECTIONS: HelpSection[] = [
       {
         icon: Brain,
         title: "Recherche sémantique (IA)",
-        description:
-          "Lina peut faire des recherches sémantiques sur votre inventaire, trouvant des produits même avec des descriptions approximatives ou des synonymes.",
+        description: `${assistantName} peut faire des recherches sémantiques sur votre inventaire, trouvant des produits même avec des descriptions approximatives ou des synonymes.`,
       },
       {
         icon: Download,
         title: "Export par la voix",
-        description:
-          "Demandez \"Exporte mon inventaire en CSV\" pour déclencher l'export directement depuis Lina.",
+        description: `Demandez \"Exporte mon inventaire en CSV\" pour déclencher l'export directement depuis ${assistantName}.`,
       },
     ],
-  },
-  {
-    id: "sync",
-    icon: CloudUpload,
-    title: "Synchronisation & Hors-ligne",
-    color: "text-sky-600",
-    bgColor: "bg-sky-50",
-    borderColor: "border-sky-200",
-    features: [
-      {
-        icon: Wifi,
-        title: "Synchronisation en temps réel",
-        description:
-          "L'inventaire est synchronisé en temps réel via Supabase. Toute modification sur un appareil apparaît instantanément sur tous les autres appareils connectés.",
-      },
-      {
-        icon: WifiOff,
-        title: "Mode hors-ligne",
-        description:
-          "L'app continue de fonctionner sans connexion internet. Les modifications sont sauvegardées localement et synchronisées automatiquement dès le retour en ligne.",
-        tip: "Une bannière orange/rouge indique l'état hors-ligne et le nombre d'opérations en attente.",
-      },
-      {
-        icon: CloudUpload,
-        title: "Synchronisation manuelle",
-        description:
-          "Si des opérations sont en attente, un bouton de synchronisation (nuage) apparaît dans le header. Touchez-le pour forcer la synchro immédiatement.",
-      },
-    ],
-  },
-  {
-    id: "export",
-    icon: Download,
-    title: "Export & Import",
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-200",
-    features: [
-      {
-        icon: FileText,
-        title: "Export CSV",
-        description:
-          "Exportez tout l'inventaire en fichier CSV (Code-barres, Nom, Marque, Catégorie, Quantité). Téléchargé automatiquement avec la date du jour dans le nom de fichier.",
-      },
-      {
-        icon: FileText,
-        title: "Export PDF",
-        description:
-          "Générez un rapport PDF complet de votre inventaire avec mise en forme, tableau produits et statistiques. Idéal pour l'impression ou le partage.",
-      },
-      {
-        icon: Upload,
-        title: "Import CSV",
-        description:
-          "Importez des produits en masse depuis un fichier CSV. L'app vérifie chaque produit sur OpenFoodFacts et synchronise avec la base de données. Une barre de progression suit l'avancement.",
-        tip: "Le fichier CSV doit avoir les colonnes : Code-barres, Nom, Marque, Catégorie, Quantité.",
-      },
-    ],
-  },
-  {
-    id: "embeddings",
-    icon: Brain,
-    title: "Vectorisation (IA avancée)",
-    color: "text-rose-600",
-    bgColor: "bg-rose-50",
-    borderColor: "border-rose-200",
-    badge: "Avancé",
-    features: [
-      {
-        icon: Brain,
-        title: "Génération d'embeddings",
-        description:
-          "Les embeddings sont des représentations vectorielles de vos produits permettant la recherche sémantique. Cliquez sur l'icône cerveau dans le header pour lancer la génération pour tous les produits.",
-      },
-      {
-        icon: Zap,
-        title: "Recherche sémantique intelligente",
-        description:
-          "Une fois les embeddings générés, Lina peut faire des recherches intelligentes : \"Trouve quelque chose de sucré\" ou \"Produits laitiers en rupture\" avec des résultats pertinents même sans correspondance exacte.",
-      },
-      {
-        icon: CheckCircle,
-        title: "Progression de vectorisation",
-        description:
-          "Une barre de progression s'affiche dans le header pendant la génération. Vous pouvez mettre en pause et reprendre à tout moment.",
-      },
-    ],
-  },
-];
+  };
+
+  return [
+    {
+      id: "scan",
+      icon: Scan,
+      title: "Onglet Scanner",
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-50",
+      borderColor: "border-indigo-200",
+      badge: "Principal",
+      features: [
+        {
+          icon: Barcode,
+          title: "Scanner par code-barres (douchette)",
+          description:
+            "Connectez une douchette USB ou Bluetooth. Scannez un produit pour le retrouver instantanément dans votre inventaire ou l'ajouter s'il est nouveau. La douchette fonctionne depuis n'importe quel onglet.",
+          tip: "La douchette est toujours active — inutile d'être sur l'onglet Scanner.",
+        },
+        {
+          icon: Camera,
+          title: "Scanner par caméra",
+          description:
+            "Utilisez l'appareil photo de votre téléphone pour scanner un code-barres. Activez le mode caméra via le bouton de bascule dans l'onglet Scanner.",
+          tip: "Mode caméra idéal pour les appareils sans douchette hardware.",
+        },
+        {
+          icon: Keyboard,
+          title: "Saisie manuelle de code-barres",
+          description:
+            "Tapez directement le code-barres d'un produit si vous ne pouvez pas le scanner. Utilisez le champ de saisie manuelle affiché dans l'onglet.",
+        },
+        {
+          icon: Plus,
+          title: "Ajout d'un nouveau produit",
+          description:
+            "Quand un code-barres est inconnu, l'app cherche le produit sur OpenFoodFacts automatiquement. Si trouvé, vous choisissez la quantité. Si introuvable, un formulaire manuel s'ouvre pour saisir les infos (nom, marque, catégorie, prix).",
+        },
+        {
+          icon: Edit3,
+          title: "Modifier un produit existant",
+          description:
+            "En scannant un produit déjà en inventaire, un menu s'ouvre proposant deux actions : ajuster le stock ou modifier les informations produit (nom, marque, catégorie, prix d'achat/vente).",
+        },
+      ],
+    },
+    {
+      id: "autoScan",
+      icon: Zap,
+      title: "Scan Automatique",
+      color: "text-amber-600",
+      bgColor: "bg-amber-50",
+      borderColor: "border-amber-200",
+      badge: "Rapide",
+      features: [
+        {
+          icon: Zap,
+          title: "Mode batch (scan en rafale)",
+          description:
+            "Activez le scan automatique pour traiter des dizaines de produits sans confirmation. Chaque scan ajoute ou retire automatiquement 1 unité du stock sans ouvrir aucun modal.",
+          tip: "Parfait pour les réceptions de livraison ou les inventaires rapides.",
+        },
+        {
+          icon: Plus,
+          title: "Mode Ajout (+1 par scan)",
+          description:
+            "Chaque scan ajoute +1 à la quantité du produit en stock. Si le produit est nouveau et reconnu sur OpenFoodFacts, il est créé automatiquement avec une quantité de 1.",
+        },
+        {
+          icon: Minus,
+          title: "Mode Retrait (−1 par scan)",
+          description:
+            "Chaque scan retire 1 unité du stock. Une alerte vibrante s'affiche si le stock est déjà à 0. Le stock ne peut pas passer en négatif.",
+        },
+      ],
+    },
+    {
+      id: "stock",
+      icon: Package,
+      title: "Onglet Stock",
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50",
+      borderColor: "border-emerald-200",
+      features: [
+        {
+          icon: Search,
+          title: "Recherche produits",
+          description:
+            "Recherchez par nom, marque, catégorie ou code-barres. La recherche est instantanée et insensible à la casse.",
+        },
+        {
+          icon: Filter,
+          title: "Filtres de stock",
+          description:
+            "Filtrez l'inventaire par état : \"Tous\", \"Stock faible\" (≤ 5 unités), \"Rupture\" (0 unité) ou \"En stock\" (> 5 unités). Combinez avec la recherche pour des résultats précis.",
+          tip: "Le compteur de rupture est affiché en rouge dans le header.",
+        },
+        {
+          icon: Tags,
+          title: "Filtre par catégorie",
+          description:
+            "Ouvrez le sélecteur de catégories pour n'afficher que les produits d'une catégorie donnée. Le nombre de produits par catégorie est affiché.",
+        },
+        {
+          icon: SortAsc,
+          title: "Tri de l'inventaire",
+          description:
+            "Triez par : date de mise à jour (récent d'abord), nom alphabétique, quantité croissante ou décroissante.",
+        },
+        {
+          icon: Plus,
+          title: "Ajustement rapide des quantités",
+          description:
+            "Appuyez sur les boutons + et − directement sur la carte produit pour modifier le stock d'une unité à la fois, sans ouvrir de modal.",
+        },
+        {
+          icon: Edit3,
+          title: "Édition produit depuis le stock",
+          description:
+            "Touchez une carte produit pour accéder à ses détails : modifier les informations, ajuster le stock avec saisie libre, ou supprimer l'article.",
+        },
+        {
+          icon: Trash2,
+          title: "Suppression de produit",
+          description:
+            "Supprimez un produit de l'inventaire depuis ses détails ou la carte. Une confirmation est demandée pour éviter les accidents.",
+        },
+        {
+          icon: FileText,
+          title: "Statistiques financières",
+          description:
+            "En bas de l'onglet Stock, visualisez la valeur totale d'achat, la valeur de vente potentielle et la marge brute de tout votre inventaire (si prix renseignés).",
+        },
+      ],
+    },
+    {
+      id: "categories",
+      icon: Tags,
+      title: "Gestion des Catégories",
+      color: "text-violet-600",
+      bgColor: "bg-violet-50",
+      borderColor: "border-violet-200",
+      features: [
+        {
+          icon: Tags,
+          title: "Créer une catégorie",
+          description:
+            "Ajoutez vos propres catégories personnalisées avec un nom et un emoji/icône. Ces catégories apparaissent dans les filtres et lors de l'ajout de produits.",
+        },
+        {
+          icon: Edit3,
+          title: "Renommer une catégorie",
+          description:
+            "Modifiez le nom ou l'icône d'une catégorie existante. Tous les produits associés sont automatiquement mis à jour.",
+        },
+        {
+          icon: Trash2,
+          title: "Supprimer une catégorie",
+          description:
+            "Supprimez une catégorie inutilisée. Si des produits y sont associés, ils perdront leur catégorie.",
+        },
+        {
+          icon: Brain,
+          title: "Catégorisation automatique",
+          description:
+            "Lors du scan, l'app suggère automatiquement une catégorie en analysant le nom du produit et les données OpenFoodFacts. Vous pouvez accepter ou changer la suggestion.",
+          tip: "Plus vous avez de catégories définies, meilleure est la suggestion automatique.",
+        },
+      ],
+    },
+    assistantSection,
+    {
+      id: "sync",
+      icon: CloudUpload,
+      title: "Synchronisation & Hors-ligne",
+      color: "text-sky-600",
+      bgColor: "bg-sky-50",
+      borderColor: "border-sky-200",
+      features: [
+        {
+          icon: Wifi,
+          title: "Synchronisation en temps réel",
+          description:
+            "L'inventaire est synchronisé en temps réel via Supabase. Toute modification sur un appareil apparaît instantanément sur tous les autres appareils connectés.",
+        },
+        {
+          icon: WifiOff,
+          title: "Mode hors-ligne",
+          description:
+            "L'app continue de fonctionner sans connexion internet. Les modifications sont sauvegardées localement et synchronisées automatiquement dès le retour en ligne.",
+          tip: "Une bannière orange/rouge indique l'état hors-ligne et le nombre d'opérations en attente.",
+        },
+        {
+          icon: CloudUpload,
+          title: "Synchronisation manuelle",
+          description:
+            "Si des opérations sont en attente, un bouton de synchronisation (nuage) apparaît dans le header. Touchez-le pour forcer la synchro immédiatement.",
+        },
+      ],
+    },
+    {
+      id: "export",
+      icon: Download,
+      title: "Export & Import",
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200",
+      features: [
+        {
+          icon: FileText,
+          title: "Export CSV",
+          description:
+            "Exportez tout l'inventaire en fichier CSV (Code-barres, Nom, Marque, Catégorie, Quantité). Téléchargé automatiquement avec la date du jour dans le nom de fichier.",
+        },
+        {
+          icon: FileText,
+          title: "Export PDF",
+          description:
+            "Générez un rapport PDF complet de votre inventaire avec mise en forme, tableau produits et statistiques. Idéal pour l'impression ou le partage.",
+        },
+        {
+          icon: Upload,
+          title: "Import CSV",
+          description:
+            "Importez des produits en masse depuis un fichier CSV. L'app vérifie chaque produit sur OpenFoodFacts et synchronise avec la base de données. Une barre de progression suit l'avancement.",
+          tip: "Le fichier CSV doit avoir les colonnes : Code-barres, Nom, Marque, Catégorie, Quantité.",
+        },
+      ],
+    },
+    {
+      id: "embeddings",
+      icon: Brain,
+      title: "Vectorisation (IA avancée)",
+      color: "text-rose-600",
+      bgColor: "bg-rose-50",
+      borderColor: "border-rose-200",
+      badge: "Avancé",
+      features: [
+        {
+          icon: Brain,
+          title: "Génération d'embeddings",
+          description:
+            "Les embeddings sont des représentations vectorielles de vos produits permettant la recherche sémantique. Cliquez sur l'icône cerveau dans le header pour lancer la génération pour tous les produits.",
+        },
+        {
+          icon: Zap,
+          title: "Recherche sémantique intelligente",
+          description: `Une fois les embeddings générés, ${assistantName} peut faire des recherches intelligentes : \"Trouve quelque chose de sucré\" ou \"Produits laitiers en rupture\" avec des résultats pertinents même sans correspondance exacte.`,
+        },
+        {
+          icon: CheckCircle,
+          title: "Progression de vectorisation",
+          description:
+            "Une barre de progression s'affiche dans le header pendant la génération. Vous pouvez mettre en pause et reprendre à tout moment.",
+        },
+      ],
+    },
+  ];
+};
 
 type HelpModalProps = {
   open: boolean;
   onClose: () => void;
+  assistantName: string;
 };
 
-export function HelpModal({ open, onClose }: HelpModalProps) {
+export function HelpModal({ open, onClose, assistantName }: HelpModalProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>("scan");
   const [expandedFeature, setExpandedFeature] = useState<string | null>(null);
+  const HELP_SECTIONS = makeHelpSections(assistantName);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -613,13 +612,13 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
                 </div>
                 <p className="text-[11px] text-indigo-200 leading-relaxed">
                   Ouvrez{" "}
-                  <span className="font-bold text-white">Lina</span>, votre
+                  <span className="font-bold text-white">{assistantName}</span>, votre
                   assistante IA, et posez-lui vos questions directement par la
                   voix ou par texte.
                 </p>
                 <div className="mt-2 flex items-center gap-1 text-[11px] text-violet-300 font-semibold">
                   <ArrowRight className="h-3 w-3" />
-                  <span>Onglet Lina dans la barre de navigation</span>
+                  <span>Onglet {assistantName} dans la barre de navigation</span>
                 </div>
               </div>
             </div>

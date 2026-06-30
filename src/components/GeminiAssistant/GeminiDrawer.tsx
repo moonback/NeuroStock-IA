@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useMemo } from 'react';
 import { Mic, MicOff, X, Minus, Check, Volume2, Loader2, Wifi, AlertTriangle } from 'lucide-react';
 import { AssistantState } from './types';
 
@@ -13,6 +14,7 @@ interface Props {
   onClose: () => void;
   onMuteToggle: () => void;
   onStop: () => void;
+  assistantName: string;
 }
 
 /* ── State metadata ─────────────────────────────────────────── */
@@ -45,7 +47,7 @@ const STATE_META: Record<
     wave: true,
   },
   [AssistantState.Speaking]: {
-    label: 'Lina parle',
+    label: '__ASSISTANT_NAME__ parle',
     sub: 'Écoutez la réponse',
     accent: 'bg-indigo-600 shadow-indigo-600/30',
     bgPulse: 'bg-indigo-400',
@@ -115,9 +117,14 @@ export function GeminiDrawer({
   onClose,
   onMuteToggle,
   onStop,
+  assistantName,
 }: Props) {
   const effectiveState = isMuted ? AssistantState.Muted : state;
-  const meta = STATE_META[effectiveState] ?? STATE_META[AssistantState.Idle];
+  const baseMeta = STATE_META[effectiveState] ?? STATE_META[AssistantState.Idle];
+  const meta = useMemo(() => ({
+    ...baseMeta,
+    label: baseMeta.label.replace('__ASSISTANT_NAME__', assistantName),
+  }), [baseMeta, assistantName]);
   const isActive =
     state === AssistantState.Listening ||
     state === AssistantState.Speaking ||
@@ -238,7 +245,7 @@ export function GeminiDrawer({
               className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold bg-rose-50 border border-rose-200/60 text-rose-600 hover:bg-rose-100 hover:border-rose-300 transition-all active:scale-[0.98]"
             >
               <X className="h-4 w-4 stroke-[2.5]" />
-              Fermer Lina
+              Fermer {assistantName}
             </button>
           </div>
 

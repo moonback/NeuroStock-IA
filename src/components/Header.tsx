@@ -6,6 +6,7 @@ import { HelpModal } from './HelpModal';
 
 interface HeaderProps {
   email: string;
+  assistantName: string;
   inventoryLength: number;
   totalItems: number;
   lowStockCount: number;
@@ -35,6 +36,7 @@ function useIsDesktop() {
 
 export function Header({
   email,
+  assistantName,
   inventoryLength,
   totalItems,
   lowStockCount,
@@ -352,7 +354,7 @@ export function Header({
         </div>
       </header>
 
-      <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
+      <HelpModal open={showHelp} onClose={() => setShowHelp(false)} assistantName={assistantName} />
     </>
   );
 }

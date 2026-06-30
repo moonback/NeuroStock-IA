@@ -14,6 +14,7 @@ type ScanTabProps = {
   loadingBarcode: string | null;
   actionModal: unknown;
   scannerInputMode: ScannerInputMode;
+  cameraEnabled: boolean;
   recentlyScanned: InventoryItem[];
   onScannerInputModeChange: (mode: ScannerInputMode) => void;
   onScan: (barcode: string) => void;
@@ -29,6 +30,7 @@ export function ScanTab({
   loadingBarcode,
   actionModal,
   scannerInputMode,
+  cameraEnabled,
   recentlyScanned,
   onScannerInputModeChange,
   onScan,
@@ -73,6 +75,7 @@ export function ScanTab({
           mode={scannerInputMode}
           onModeChange={onScannerInputModeChange}
           disabled={isScannerDisabled}
+          cameraEnabled={cameraEnabled}
         />
 
         {/* Input Area (only visible in hardware mode) */}

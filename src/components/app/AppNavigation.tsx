@@ -1,11 +1,11 @@
 import type React from "react";
-import { Bot, Package, Scan, Store, Tags, ShoppingCart, Power } from "lucide-react";
+import { Bot, Package, Scan, Store, Tags, ShoppingCart, Power, Settings } from "lucide-react";
 import { useGeminiAssistant } from "../../hooks/useGeminiAssistant";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { QuitConfirmModal } from "../QuitConfirmModal";
 
-export type AppTab = "scan" | "stock" | "categories" | "pos";
+export type AppTab = "scan" | "stock" | "categories" | "pos" | "settings";
 
 type NavItem = {
   tab: AppTab;
@@ -18,11 +18,13 @@ const navItems: NavItem[] = [
   { tab: "stock", label: "Stock", icon: Package },
   { tab: "categories", label: "Catégories", icon: Tags },
   { tab: "pos", label: "Ajouter stock", icon: ShoppingCart },
+  { tab: "settings", label: "Paramètres", icon: Settings },
 ];
 
 type AppNavigationProps = {
   activeTab: AppTab;
   onTabChange: (tab: AppTab) => void;
+  assistantName: string;
 };
 
 function useIsDesktop() {
@@ -40,7 +42,7 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
+export function AppNavigation({ activeTab, onTabChange, assistantName }: AppNavigationProps) {
   const assistant = useGeminiAssistant();
   const isAssistantActive = assistant.isOpen && !assistant.isMinimized;
   const isDesktop = useIsDesktop();
@@ -102,7 +104,7 @@ export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
             <button
               type="button"
               onClick={() => void assistant.open()}
-              aria-label="Ouvrir l'assistant vocal Lina"
+              aria-label={`Ouvrir l'assistant vocal ${assistantName}`}
               aria-pressed={isAssistantActive}
               className={`sidebar-nav-item w-full ${isAssistantActive ? "active !text-violet-600 !bg-violet-50/80 !border-violet-200/60" : ""}`}
             >
@@ -114,7 +116,7 @@ export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
                 />
               )}
               <Bot className={`w-5 h-5 flex-shrink-0 ${isAssistantActive ? "text-violet-600 stroke-[2.5]" : "text-stone-500 stroke-[2.5]"}`} />
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">Lina</span>
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">{assistantName}</span>
               {isAssistantActive && (
                 <motion.span
                   initial={{ scale: 0 }}
@@ -205,7 +207,7 @@ export function AppNavigation({ activeTab, onTabChange }: AppNavigationProps) {
           >
             <Bot className={`w-5 h-5 ${isAssistantActive ? "stroke-[2.5]" : "stroke-[2]"}`} />
           </motion.div>
-          <span className="text-[10px] tracking-wide leading-none">Lina</span>
+          <span className="text-[10px] tracking-wide leading-none">{assistantName}</span>
         </button>
       </div>
     </nav>

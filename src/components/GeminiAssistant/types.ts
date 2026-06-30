@@ -69,6 +69,7 @@ export interface AssistantExternalContext {
   offlineMode?: boolean;
   businessRules?: string[];
   storeName?: string;
+  assistantName?: string;
   activeProduct?: {
     name?: string;
     barcode?: string;
@@ -112,4 +113,5 @@ export interface GeminiAssistantProviderProps {
   getContext?: ExternalContextReader;
   toolHandlers?: ToolHandlers;
   autoRender?: boolean;
+  assistantName?: string;
 }

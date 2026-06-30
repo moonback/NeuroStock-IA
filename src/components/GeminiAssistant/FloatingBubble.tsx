@@ -6,6 +6,7 @@ import { AssistantState } from './types';
 interface FloatingBubbleProps {
   state: AssistantState;
   onExpand: () => void;
+  assistantName: string;
 }
 
 // Single source of truth for bubble dimensions + screen padding.
@@ -39,7 +40,7 @@ function clampPosition(pos: { x: number; y: number }, bounds: ReturnType<typeof 
   };
 }
 
-export function FloatingBubble({ state, onExpand }: FloatingBubbleProps) {
+export function FloatingBubble({ state, onExpand, assistantName }: FloatingBubbleProps) {
   const [position, setPosition] = useState(() => clampPosition({ x: 16, y: 16 }, getBounds()));
   const controls = useAnimation();
   const dragDistanceRef = useRef(0);
@@ -155,7 +156,7 @@ export function FloatingBubble({ state, onExpand }: FloatingBubbleProps) {
         return {
           bg: 'bg-gradient-to-r from-indigo-500 via-indigo-650 to-violet-650',
           ring: 'shadow-indigo-500/30',
-          label: 'Lina',
+          label: assistantName,
           icon: <Mic className="h-4 w-4" />,
           pulse: false,
           pingColor: 'bg-indigo-400',
@@ -185,7 +186,7 @@ export function FloatingBubble({ state, onExpand }: FloatingBubbleProps) {
           type="button"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.94 }}
-          aria-label={`Assistant Lina — ${cfg.label}. Glisser pour déplacer, appuyer pour ouvrir.`}
+          aria-label={`Assistant ${assistantName} — ${cfg.label}. Glisser pour déplacer, appuyer pour ouvrir.`}
           className={`relative group flex h-12 items-center gap-3 rounded-full pl-2 pr-5 text-white shadow-2xl ${cfg.bg} ${cfg.ring} border border-white/20 backdrop-blur-xl overflow-hidden`}
           style={{ minWidth: BUBBLE_WIDTH }}
         >
