@@ -29,9 +29,10 @@ interface ManualProductModalProps {
     quantity: number
   ) => void;
   onCancel: () => void;
+  onDelete?: () => void;
 }
 
-export function ManualProductModal({ barcode, categories, initialValues, onSave, onCancel }: ManualProductModalProps) {
+export function ManualProductModal({ barcode, categories, initialValues, onSave, onCancel, onDelete }: ManualProductModalProps) {
   const [name, setName] = useState(initialValues?.name ?? '');
   const [qty, setQty] = useState(String(initialValues?.quantity ?? '1'));
   const [brand, setBrand] = useState(initialValues?.brand ?? '');
@@ -428,6 +429,17 @@ export function ManualProductModal({ barcode, categories, initialValues, onSave,
             </div>
           </div>
 
+          {isEditing && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isUploading}
+              className="w-full py-3 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] disabled:opacity-40 rounded-xl shadow-md shadow-rose-600/10 flex items-center justify-center gap-1.5 transition select-none tap-active cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              Supprimer le produit
+            </button>
+          )}
           <div className="flex gap-3">
             <button
               onClick={onCancel}

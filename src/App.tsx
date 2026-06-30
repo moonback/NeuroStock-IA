@@ -485,6 +485,7 @@ export default function App() {
         );
         showToast("Erreur de suppression Supabase");
       }
+      setActionModal(null);
     }
   };
 
@@ -1365,6 +1366,7 @@ export default function App() {
               initialValues={actionModal.product}
               onSave={handleProductUpdateSave}
               onCancel={() => setActionModal(null)}
+              onDelete={() => handleRemoveItem(actionModal.product.barcode)}
             />
           )}
           {actionModal?.type === "product_details" && (
