@@ -44,7 +44,7 @@
     "appId": "com.neurostock.app",
     "productName": "NeuroStock",
     "directories": {
-      "output": "release/"
+      "output": "build-release/"
     },
     "files": [
       "dist/**/*",

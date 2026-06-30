@@ -9,3 +9,4 @@ coverage/
 !.env.example
 .env
 release/
+build-release/
