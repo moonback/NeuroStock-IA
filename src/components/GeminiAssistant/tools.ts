@@ -5,7 +5,7 @@ export const tools: ToolDefinition[] = [
   { name: 'semanticSearchProduct', description: 'Recherche semantique de produits (comprend le sens, pas seulement les mots)', parameters: { type: 'object', properties: { query: { type: 'string' }, limit: { type: 'number' } }, required: ['query'] } },
   { name: 'regenerateEmbeddings', description: 'Regenerer les embeddings pour tous les produits ou un produit specifique', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' } } } },
   { name: 'openProductDetails', description: "Ouvrir la fiche detaillee mobile d'un produit present dans l'inventaire", parameters: { type: 'object', properties: { query: { type: 'string' }, barcode: { type: 'string' } } } },
-  { name: 'updateStock', description: 'Modifier un stock', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' }, query: { type: 'string' }, name: { type: 'string' }, quantity: { type: 'number' } }, required: ['quantity'] } },
+  { name: 'updateStock', description: 'Modifier un stock. Par défaut, quantity est un delta relatif (ajout/retrait). Pour un réglage absolu, utiliser operation: "set".', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' }, query: { type: 'string' }, name: { type: 'string' }, quantity: { type: 'number' }, operation: { type: 'string', enum: ['add', 'remove', 'set'] } }, required: ['quantity'] } },
   {
     name: 'updateProduct',
     description: 'Modifier un produit (prix, nom, marque, categorie, etc.)',

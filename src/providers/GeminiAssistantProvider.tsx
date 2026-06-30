@@ -1,4 +1,5 @@
 import { createContext, useCallback, useMemo, useRef, useState } from 'react';
+import type { InventoryProductSnapshot } from '../components/GeminiAssistant/types';
 import { GeminiAssistant } from '../components/GeminiAssistant/GeminiAssistant';
 import { AudioManager } from '../components/GeminiAssistant/AudioManager';
 import { FunctionDispatcher } from '../components/GeminiAssistant/FunctionDispatcher';
@@ -21,12 +22,18 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
   const autoAcceptRef = useRef(autoAccept);
   const audio = useRef(AudioManager.getInstance());
   const session = useRef<LiveSession | null>(null);
+  const activeProductRef = useRef<AssistantExternalContext['activeProduct']>(null);
 
   // Mettre à jour le ref quand autoAccept change
   autoAcceptRef.current = autoAccept;
 
   const readContext = useCallback(async () => {
-    return await getContext();
+    const baseContext = await getContext();
+    const activeProduct = activeProductRef.current ?? baseContext.activeProduct ?? null;
+    return {
+      ...baseContext,
+      activeProduct,
+    };
   }, [getContext]);
 
   const askPermission = useCallback((request: Omit<PermissionRequest, 'id' | 'resolve'>) => new Promise<boolean>((resolve) => {
@@ -41,6 +48,10 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
     permission?.resolve(allowed);
     setPermission(null);
   }, [permission]);
+
+  const rememberProduct = useCallback((product: AssistantExternalContext['activeProduct']) => {
+    activeProductRef.current = product ?? null;
+  }, []);
 
   const open = useCallback(async () => {
     setOpen(true);
@@ -58,7 +69,20 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
         onClose: () => setState(AssistantState.Idle),
         onAudio: () => setState(AssistantState.Speaking),
         onThinking: () => setState(AssistantState.Thinking),
-        onFunctionCall: (call) => dispatcher.dispatch(call),
+        onFunctionCall: async (call) => {
+          const result = await dispatcher.dispatch(call);
+          if (call.name === 'searchProduct') {
+            const product = (result.response.data as { product?: InventoryProductSnapshot } | undefined)?.product;
+            if (product) {
+              rememberProduct({
+                name: product.name,
+                barcode: product.barcode,
+                brand: product.brand,
+              });
+            }
+          }
+          return result;
+        },
         onError: (message) => { setError(message); setState(AssistantState.Error); },
       });
       await session.current.connect(currentContext);
@@ -68,11 +92,12 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
       setError(err instanceof Error ? err.message : 'Erreur assistant vocal');
       setState(AssistantState.Error);
     }
-  }, [askPermission, readContext, toolHandlers]);
+  }, [askPermission, readContext, toolHandlers, rememberProduct]);
 
   const close = useCallback(async () => {
     await session.current?.disconnect();
     session.current = null;
+    activeProductRef.current = null;
     setOpen(false);
     setMinimized(false);
     setState(AssistantState.Idle);

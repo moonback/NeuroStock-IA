@@ -5,6 +5,21 @@ const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const EMBEDDING_MODEL = import.meta.env.VITE_OPENROUTER_EMBED_MODEL || 'openai/text-embedding-3-large';
 const EMBEDDING_DIMENSIONS = parseInt(import.meta.env.VITE_OPENROUTER_EMBED_DIMENSIONS || '3072', 10);
 
+function normalizeEmbedding(embedding: number[] | null | undefined, targetLength = EMBEDDING_DIMENSIONS): number[] {
+  const safeTargetLength = Number.isFinite(targetLength) && targetLength > 0 ? Math.floor(targetLength) : 1536;
+
+  if (!Array.isArray(embedding) || embedding.length === 0) {
+    return new Array(safeTargetLength).fill(0);
+  }
+
+  const normalized = embedding.slice(0, safeTargetLength);
+  if (normalized.length < safeTargetLength) {
+    normalized.push(...new Array(safeTargetLength - normalized.length).fill(0));
+  }
+
+  return normalized;
+}
+
 /**
  * Simple hash function to generate a pseudo-embedding as fallback
  */
@@ -68,7 +83,7 @@ export async function generateProductEmbedding(product: Pick<InventoryItem, 'nam
 
     const data = await response.json();
     if (data.data && data.data[0] && data.data[0].embedding) {
-      return data.data[0].embedding;
+      return normalizeEmbedding(data.data[0].embedding);
     }
 
     console.warn('Invalid response from OpenRouter embedding API, using fallback');
@@ -83,20 +98,18 @@ export async function generateProductEmbedding(product: Pick<InventoryItem, 'nam
 /**
  * Calcul la similarité cosinus entre deux vecteurs
  */
-export function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) {
-    console.warn(`Vector length mismatch: ${a.length} vs ${b.length}`);
-    return 0;
-  }
+export function cosineSimilarity(a: number[] | null | undefined, b: number[] | null | undefined): number {
+  const left = normalizeEmbedding(a);
+  const right = normalizeEmbedding(b);
 
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
 
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
+  for (let i = 0; i < left.length; i++) {
+    dotProduct += left[i] * right[i];
+    normA += left[i] * left[i];
+    normB += right[i] * right[i];
   }
 
   if (normA === 0 || normB === 0) {

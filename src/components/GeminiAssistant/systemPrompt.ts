@@ -14,6 +14,10 @@ export function buildSystemPrompt(context: AssistantExternalContext = {}): strin
     context.user?.name ??
     context.user?.email ??
     'utilisateur';
+  const activeProduct = context.activeProduct;
+  const activeProductSummary = activeProduct?.name
+    ? `${activeProduct.name}${activeProduct.brand ? ` (${activeProduct.brand})` : ''}${activeProduct.barcode ? ` - cb:${activeProduct.barcode}` : ''}`
+    : 'aucun';
 
   // Calculate inventory stats
   const totalProducts = inventory.length;
@@ -54,6 +58,9 @@ Langue: ${language}
 * Si ambigu → poser 1 seule question courte
 * Si info manquante → demander uniquement l’essentiel
 * Toujours privilégier l’action
+* Mémoire produit : si l’utilisateur parle d’un produit, garde ce produit comme produit courant en mémoire jusqu’à ce qu’un nouveau produit soit explicitement mentionné
+* Si un nouveau produit est évoqué, remplace le produit courant précédent par le nouveau produit
+* Lorsque l’utilisateur parle d’une action sur le produit courant sans le nommer de nouveau, utilise ce produit courant comme référence implicite
 
 ---
 
@@ -110,6 +117,8 @@ Cas retour createProduct :
 
 → "ajoute", "retire", "mets à"
 → updateStock direct
+→ Par défaut, pour "ajoute" ou "retire", la quantité est un delta relatif par rapport au stock actuel
+→ Pour "mets à", utilise une valeur absolue avec operation="set"
 
 ## Modification produit
 
@@ -159,6 +168,14 @@ Si offline :
 # 👤 UTILISATEUR
 
 ${userLabel}
+
+---
+
+# 🧠 PRODUIT COURANT
+
+${activeProductSummary}
+
+Si un produit courant existe, considère-le comme la référence implicite pour les prochaines actions tant qu’aucun nouveau produit n’est mentionné.
 
 ---
 

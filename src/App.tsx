@@ -1,5 +1,5 @@
 import { Header } from "./components/Header";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ManualProductModal } from "./components/ManualProductModal";
 import { QuantityModal } from "./components/QuantityModal";
 import { ScanChoiceModal } from "./components/ScanChoiceModal";
@@ -167,6 +167,17 @@ export default function App() {
   const [scannerInputMode, setScannerInputMode] = useState<ScannerInputMode>("hardware");
   const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
   const [showVectorizeConfirm, setShowVectorizeConfirm] = useState(false);
+  const [assistantRecentProduct, setAssistantRecentProduct] = useState<InventoryItem | null>(null);
+  const inventoryRef = useRef<InventoryItem[]>([]);
+  const assistantRecentProductRef = useRef<InventoryItem | null>(null);
+
+  useEffect(() => {
+    inventoryRef.current = inventory;
+  }, [inventory]);
+
+  useEffect(() => {
+    assistantRecentProductRef.current = assistantRecentProduct;
+  }, [assistantRecentProduct]);
 
   const showToast = useCallback((text: string) => {
     const id = Date.now();
@@ -879,10 +890,42 @@ export default function App() {
             };
           },
           updateStock: async (args) => {
-            const quantity = Number(args.quantity);
-            const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
+            const requestedQuantity = Number(args.quantity);
+            const mode = String(args.operation ?? args.mode ?? "").trim().toLowerCase();
+            const rawQuery = String(args.query ?? args.name ?? args.barcode ?? "");
+            const currentInventory = inventoryRef.current;
+            const recentProduct = assistantRecentProductRef.current;
+            console.log('[assistant][updateStock] start', { rawQuery, quantity: requestedQuantity, mode, inventoryLength: currentInventory.length, assistantRecentProduct: recentProduct });
+
+            let resolvedItem = recentProduct;
+            let { item, ambiguousMatches } = findInventoryItemForAssistant(currentInventory, args);
+            console.log('[assistant][updateStock] initial lookup', { itemBarcode: item?.barcode, ambiguousCount: ambiguousMatches.length });
+
+            if (!item && resolvedItem) {
+              const normalizedQuery = normalizeAssistantQuery(rawQuery);
+              const matchesRecent = !normalizedQuery || normalizedQuery === normalizeAssistantQuery(resolvedItem.name) || normalizedQuery === normalizeAssistantQuery(resolvedItem.barcode);
+              console.log('[assistant][updateStock] fallback recent product', { matchesRecent, resolvedItemBarcode: resolvedItem.barcode, resolvedItemName: resolvedItem.name });
+              if (matchesRecent) {
+                item = resolvedItem;
+              }
+            }
+
+            if (!item) {
+              const barcode = normalizeOptionalText(args.barcode) ?? normalizeOptionalText(args.query);
+              if (barcode) {
+                const fallbackByBarcode = currentInventory.find((candidate) => candidate.barcode === barcode) ?? (recentProduct?.barcode === barcode ? recentProduct : null);
+                if (fallbackByBarcode) {
+                  item = fallbackByBarcode;
+                }
+              }
+              if (!item) {
+                ({ item, ambiguousMatches } = findInventoryItemForAssistant(currentInventory, args));
+              }
+              console.log('[assistant][updateStock] second lookup', { itemBarcode: item?.barcode, ambiguousCount: ambiguousMatches.length });
+            }
 
             if (ambiguousMatches.length > 0) {
+              console.warn('[assistant][updateStock] ambiguous', ambiguousMatches);
               return {
                 updated: false,
                 ambiguous: true,
@@ -894,13 +937,51 @@ export default function App() {
               };
             }
 
-            if (!item || !Number.isFinite(quantity)) throw new Error("Produit ou quantité invalide");
+            if (!item || !Number.isFinite(requestedQuantity)) {
+              console.error('[assistant][updateStock] invalid', { itemExists: Boolean(item), quantity: requestedQuantity });
+              throw new Error("Produit ou quantité invalide");
+            }
 
-            await syncItem({ ...item, quantity: Math.max(0, quantity), lastUpdated: Date.now(), lastMovement: quantity - item.quantity });
-            return { barcode: item.barcode, name: item.name, quantity, updated: true };
+            const isAbsoluteSet = mode === 'set' || mode === 'absolute' || mode === 'mets_a';
+            const nextQuantity = isAbsoluteSet
+              ? Math.max(0, requestedQuantity)
+              : Math.max(0, item.quantity + requestedQuantity);
+            const movement = nextQuantity - item.quantity;
+            const updatedItem = { ...item, quantity: nextQuantity, lastUpdated: Date.now(), lastMovement: movement };
+            console.log('[assistant][updateStock] before sync', { barcode: item.barcode, oldQuantity: item.quantity, newQuantity: updatedItem.quantity, movement, mode });
+            await syncItem(updatedItem);
+            setInventory((prev) => {
+              const next = prev.some((candidate) => candidate.barcode === item!.barcode)
+                ? prev.map((candidate) => candidate.barcode === item!.barcode ? updatedItem : candidate)
+                : [updatedItem, ...prev];
+              inventoryRef.current = next;
+              return next;
+            });
+            assistantRecentProductRef.current = updatedItem;
+            setAssistantRecentProduct(updatedItem);
+            console.log('[assistant][updateStock] success', { barcode: item.barcode, quantity: updatedItem.quantity });
+            return { barcode: item.barcode, name: item.name, quantity: updatedItem.quantity, updated: true, mode, delta: requestedQuantity };
           },
           updateProduct: async (args) => {
-            const { item, ambiguousMatches } = findInventoryItemForAssistant(inventory, args);
+            const currentInventory = inventoryRef.current;
+            const recentProduct = assistantRecentProductRef.current;
+            const rawQuery = String(args.query ?? args.name ?? args.barcode ?? "");
+            let { item, ambiguousMatches } = findInventoryItemForAssistant(currentInventory, args);
+
+            if (!item && recentProduct) {
+              const normalizedQuery = normalizeAssistantQuery(rawQuery);
+              const matchesRecent = !normalizedQuery || normalizedQuery === normalizeAssistantQuery(recentProduct.name) || normalizedQuery === normalizeAssistantQuery(recentProduct.barcode);
+              if (matchesRecent) {
+                item = recentProduct;
+              }
+            }
+
+            if (!item) {
+              const barcode = normalizeOptionalText(args.barcode) ?? normalizeOptionalText(args.query);
+              if (barcode) {
+                item = currentInventory.find((candidate) => candidate.barcode === barcode) ?? (recentProduct?.barcode === barcode ? recentProduct : null) ?? null;
+              }
+            }
 
             if (ambiguousMatches.length > 0) {
               return {
@@ -941,6 +1022,15 @@ export default function App() {
             }
 
             await syncItem(updatedItem);
+            setInventory((prev) => {
+              const next = prev.some((candidate) => candidate.barcode === item!.barcode)
+                ? prev.map((candidate) => candidate.barcode === item!.barcode ? updatedItem : candidate)
+                : [updatedItem, ...prev];
+              inventoryRef.current = next;
+              return next;
+            });
+            assistantRecentProductRef.current = updatedItem;
+            setAssistantRecentProduct(updatedItem);
             return { barcode: item.barcode, name: item.name, updated: true };
           },
           createProduct: async (args) => {
@@ -1088,7 +1178,16 @@ export default function App() {
               console.error('Failed to generate embedding for new product:', error);
             }
 
+            console.log('[assistant][createProduct] start', { barcode, name, brand, quantity });
             const queued = await syncItem(item);
+            setInventory((prev) => {
+              const next = [item, ...prev.filter((candidate) => candidate.barcode !== item.barcode)];
+              inventoryRef.current = next;
+              return next;
+            });
+            assistantRecentProductRef.current = item;
+            setAssistantRecentProduct(item);
+            console.log('[assistant][createProduct] created', { barcode: item.barcode, name: item.name, queued });
             showToast(queued ? `Produit cree en attente de synchro: ${resolvedName}` : `Produit cree: ${resolvedName}`);
             return {
               created: true,

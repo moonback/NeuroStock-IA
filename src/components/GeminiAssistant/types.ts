@@ -69,6 +69,11 @@ export interface AssistantExternalContext {
   offlineMode?: boolean;
   businessRules?: string[];
   storeName?: string;
+  activeProduct?: {
+    name?: string;
+    barcode?: string;
+    brand?: string;
+  } | null;
 }
 
 export type ExternalContextReader = () => AssistantExternalContext | Promise<AssistantExternalContext>;
