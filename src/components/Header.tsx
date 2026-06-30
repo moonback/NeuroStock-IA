@@ -210,7 +210,7 @@ export function Header({
                 </motion.button>
               )}
 
-              {showExport && (
+              {/* {showExport && (
                 <div className="relative">
                   <motion.button
                     layout
@@ -272,7 +272,7 @@ export function Header({
                     )}
                   </AnimatePresence>
                 </div>
-              )}
+              )} */}
 
               {/* Embedding progress banner */}
               <AnimatePresence>
