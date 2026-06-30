@@ -1022,6 +1022,53 @@ export default function App() {
             setActiveTab(match);
             return { navigated: true, destination: match };
           },
+          getDashboardSummary: async () => {
+            const list = inventoryRef.current;
+            const cats = dbCategories;
+            const totalReferences = list.length;
+            const totalUnits = list.reduce((sum, item) => sum + item.quantity, 0);
+            const lowStockCount = list.filter((item) => item.quantity <= 5 && item.quantity > 0).length;
+            const outOfStockCount = list.filter((item) => item.quantity === 0).length;
+            const inStockCount = list.filter((item) => item.quantity > 5).length;
+            const totalPurchaseVal = list.reduce((sum, item) => sum + item.quantity * (item.purchasePrice ?? 0), 0);
+            const totalSalesVal = list.reduce((sum, item) => sum + item.quantity * (item.salesPrice ?? 0), 0);
+            const potentialMargin = totalSalesVal - totalPurchaseVal;
+
+            const topByQty = [...list].sort((a, b) => b.quantity - a.quantity).slice(0, 5);
+            const topByValue = [...list].sort((a, b) => {
+              const aVal = a.quantity * (a.purchasePrice ?? 0);
+              const bVal = b.quantity * (b.purchasePrice ?? 0);
+              return bVal - aVal;
+            }).slice(0, 5);
+
+            const categoryMap = new Map<string, { name: string; count: number; qty: number; value: number }>();
+            list.forEach((item) => {
+              const cat = item.category?.trim() || 'Non classé';
+              const entry = categoryMap.get(cat) || { name: cat, count: 0, qty: 0, value: 0 };
+              entry.count += 1;
+              entry.qty += item.quantity;
+              entry.value += item.quantity * (item.purchasePrice ?? 0);
+              categoryMap.set(cat, entry);
+            });
+            const categoryStats = Array.from(categoryMap.values()).sort((a, b) => b.value - a.value).slice(0, 8);
+
+            const recentlyScanned = [...list].sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, 6);
+
+            return {
+              totalReferences,
+              totalUnits,
+              totalPurchaseValue: totalPurchaseVal,
+              totalSalesValue: totalSalesVal,
+              potentialMargin,
+              lowStockCount,
+              outOfStockCount,
+              inStockCount,
+              topByQty: topByQty.map((item) => ({ barcode: item.barcode, name: item.name, quantity: item.quantity, category: item.category })),
+              topByValue: topByValue.map((item) => ({ barcode: item.barcode, name: item.name, quantity: item.quantity, purchasePrice: item.purchasePrice, value: item.quantity * (item.purchasePrice ?? 0) })),
+              categoryStats: categoryStats.map((cat) => ({ name: cat.name, count: cat.count, qty: cat.qty, value: cat.value })),
+              recentlyScanned: recentlyScanned.map((item) => ({ barcode: item.barcode, name: item.name, quantity: item.quantity, lastUpdated: item.lastUpdated })),
+            };
+          },
           updateStock: async (args) => {
             const requestedQuantity = Number(args.quantity);
             const mode = String(args.operation ?? args.mode ?? "").trim().toLowerCase();

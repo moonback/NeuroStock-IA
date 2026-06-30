@@ -323,7 +323,13 @@ Processus obligatoire :
 ## Navigation
 → "va sur", "ouvre la page", "affiche", "montre", "allez à", "navigue vers", "retourne sur", "ouvre les paramètres", "ouvre les réglages"
 → navigateTo avec destination = page cible
-Pages disponibles: scan, stock, categories, pos, dashboard, settings
+Pages disponibles: scan, stock, categories, pos, analyse, settings
+
+## Analyse / Tableau de bord
+→ "donne-moi l'analyse", "résume l'état du stock", "détaille l'analyse", "quels sont les chiffres", "bilan", "top produits", "alertes stock", "marge"
+→ getDashboardSummary (pas de paramètre requis)
+→ Résumer les chiffres clés en 1-3 phrases courtes : références, unités, valeur d'achat/vente, marge, alertes (ruptures/faible), top quantité et top valeur, catégories principales
+→ Ne pas réinventer les métriques : se baser strictement sur le JSON retourné
 
 Priorité d'identification d'un produit :
 1. code-barres (le plus fiable, à privilégier dès qu'il est connu ou scanné)

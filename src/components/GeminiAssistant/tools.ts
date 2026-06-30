@@ -7,6 +7,7 @@ export const tools: ToolDefinition[] = [
   { name: 'openProductDetails', description: "Ouvrir la fiche detaillee d'un produit present dans l'inventaire", parameters: { type: 'object', properties: { query: { type: 'string' }, barcode: { type: 'string' } } } },
   { name: 'closeModal', description: 'Fermer le modal produit ou formulaire actuellement ouvert', parameters: { type: 'object', properties: {} } },
   { name: 'navigateTo', description: "Naviguer vers une page de l'application (scan, stock, categories, pos, dashboard, settings)", parameters: { type: 'object', properties: { destination: { type: 'string' } }, required: ['destination'] } },
+  { name: 'getDashboardSummary', description: "Obtenir un resume analytique de l'inventaire (KPIs, top produits par quantite et valeur,alertes stock, repartition categories, derniers scans)", parameters: { type: 'object', properties: { limit: { type: 'number' } } } },
   { name: 'updateStock', description: 'Modifier un stock. Par défaut, quantity est un delta relatif (ajout/retrait). Pour un réglage absolu, utiliser operation: "set".', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' }, query: { type: 'string' }, name: { type: 'string' }, quantity: { type: 'number' }, operation: { type: 'string', enum: ['add', 'remove', 'set'] } }, required: ['quantity'] } },
   {
     name: 'updateProduct',
