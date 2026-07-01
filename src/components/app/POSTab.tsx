@@ -110,17 +110,39 @@ export function POSTab({ inventory, onUpdateQuantity }: POSTabProps) {
     triggerHaptic("success");
     onUpdateQuantity(product.barcode, delta);
 
-    const newHistoryItem: HistoryItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      product,
-      delta,
-      timestamp: Date.now(),
-      reverted: false,
-    };
+    setHistory((prev) => {
+      // Find an existing active (non-reverted) entry for this product
+      const existingIndex = prev.findIndex(
+        (h) => !h.reverted && h.product.barcode === product.barcode
+      );
 
-    setHistory((prev) => [newHistoryItem, ...prev]);
+      if (existingIndex !== -1) {
+        // Merge: update delta and timestamp, reset product ref to latest
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          product,
+          delta: updated[existingIndex].delta + delta,
+          timestamp: Date.now(),
+        };
+        // Move the merged item to the top
+        const [merged] = updated.splice(existingIndex, 1);
+        return [merged, ...updated];
+      }
+
+      // No existing entry — create a new one
+      const newHistoryItem: HistoryItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        product,
+        delta,
+        timestamp: Date.now(),
+        reverted: false,
+      };
+      return [newHistoryItem, ...prev];
+    });
+
     setSearchTerm("");
-    setMultiplier(1); // Reset multiplier after use
+    setMultiplier(1);
     searchInputRef.current?.focus();
   };
 
