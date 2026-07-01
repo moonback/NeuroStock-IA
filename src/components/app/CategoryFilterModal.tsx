@@ -166,22 +166,24 @@ function CategoryButton({ active, title, subtitle, icon, onClick }: CategoryButt
       onClick={onClick}
       className={`w-full flex items-center justify-between p-3 rounded-xl border transition select-none tap-active cursor-pointer ${
         active
-          ? "bg-indigo-50/70 border-indigo-250/50 text-indigo-950 shadow-xs"
-          : "bg-white border-stone-200 text-stone-900 hover:border-stone-300 hover:bg-stone-50/50"
+          ? "bg-indigo-50/70 dark:bg-indigo-950/50 border-indigo-200 dark:border-indigo-700/60 text-indigo-950 dark:text-indigo-100 shadow-xs"
+          : "bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 hover:border-stone-300 dark:hover:border-stone-600 hover:bg-stone-50/50 dark:hover:bg-stone-700/50"
       }`}
     >
       <div className="flex items-center gap-3">
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-          active ? "bg-indigo-100/60 text-indigo-700" : "bg-stone-50 border border-stone-150 text-stone-500"
+          active
+            ? "bg-indigo-100/60 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300"
+            : "bg-stone-50 dark:bg-stone-700 border border-stone-150 dark:border-stone-600 text-stone-500 dark:text-stone-400"
         }`}>
           {icon}
         </div>
         <div className="text-left">
-          <p className={`text-xs font-bold ${active ? "text-indigo-950" : "text-stone-850"}`}>{title}</p>
-          <p className={`text-[9px] font-bold uppercase tracking-wider mt-0.5 ${active ? "text-indigo-650" : "text-stone-400"}`}>{subtitle}</p>
+          <p className={`text-xs font-bold ${active ? "text-indigo-950 dark:text-indigo-100" : "text-stone-800 dark:text-stone-200"}`}>{title}</p>
+          <p className={`text-[9px] font-bold uppercase tracking-wider mt-0.5 ${active ? "text-indigo-600 dark:text-indigo-400" : "text-stone-400 dark:text-stone-500"}`}>{subtitle}</p>
         </div>
       </div>
-      {active && <Check className="w-4 h-4 text-indigo-600 stroke-[3.5]" />}
+      {active && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 stroke-[3.5]" />}
     </button>
   );
 }
