@@ -392,7 +392,7 @@ function TabButton({
         />
 
         {/* Badge */}
-        <AnimatePresence>
+        {/* <AnimatePresence>
           {badge > 0 && (
             <motion.span
               key="badge"
@@ -411,7 +411,7 @@ function TabButton({
               {badge > 99 ? '99+' : badge}
             </motion.span>
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
       </motion.div>
 
       {/* Label — always visible */}
