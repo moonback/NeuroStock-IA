@@ -193,7 +193,7 @@ export function Header({
                   }`}
               >
                 <HelpCircle className="h-3.5 w-3.5" />
-                {isDesktop && <span className="text-[11px] font-bold">Aide</span>}
+                {/* {isDesktop && <span className="text-[11px] font-bold">Aide</span>} */}
               </motion.button>
 
               {onOpenSettings && (
@@ -206,7 +206,7 @@ export function Header({
                     }`}
                 >
                   <Settings className="h-3.5 w-3.5" />
-                  {isDesktop && <span className="text-[11px] font-bold">Paramètres</span>}
+                  {/* {isDesktop && <span className="text-[11px] font-bold">Paramètres</span>} */}
                 </motion.button>
               )}
 
@@ -317,7 +317,7 @@ export function Header({
                     }`}
                 >
                   <Download className="h-3.5 w-3.5" />
-                  {isDesktop && <span className="text-[11px] font-bold">Exporter</span>}
+                  {/* {isDesktop && <span className="text-[11px] font-bold">Exporter</span>} */}
                 </motion.button>
               )}
 
@@ -330,7 +330,7 @@ export function Header({
                   }`}
               >
                 <LogOut className="h-3.5 w-3.5" />
-                {isDesktop && <span className="text-[11px] font-bold">Déconnexion</span>}
+                {/* {isDesktop && <span className="text-[11px] font-bold">Déconnexion</span>} */}
               </motion.button>
             </motion.div>
           </div>
