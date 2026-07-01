@@ -131,9 +131,24 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           className="rounded-3xl border border-stone-200/50 bg-white/90 backdrop-blur-md p-6.5 shadow-xl shadow-stone-900/4"
         >
           <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-base font-extrabold text-stone-900 mb-1">
-              {isLogin ? "Connexion" : "Créer un compte"}
-            </h2>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-base font-extrabold text-stone-900">
+                {isLogin ? "Connexion" : "Créer un compte"}
+              </h2>
+              {import.meta.env.DEV && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(import.meta.env.VITE_DEV_EMAIL ?? "");
+                    setPassword(import.meta.env.VITE_DEV_PASSWORD ?? "");
+                  }}
+                  className="text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition cursor-pointer select-none"
+                  title="Remplir les identifiants de développement"
+                >
+                  DEV
+                </button>
+              )}
+            </div>
 
             <AnimatePresence mode="wait">
               {error && (

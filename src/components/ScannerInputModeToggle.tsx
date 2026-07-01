@@ -16,6 +16,8 @@ export function ScannerInputModeToggle({
   disabled = false,
   cameraEnabled = true,
 }: ScannerInputModeToggleProps) {
+  if (!cameraEnabled) return null;
+
   return (
     <div className="rounded-2xl border border-stone-200/60 bg-white p-1 shadow-sm">
       <div className={`grid gap-1 relative z-0 ${cameraEnabled ? 'grid-cols-2' : 'grid-cols-1'}`}>
