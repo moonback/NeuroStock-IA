@@ -58,11 +58,12 @@ export default defineConfig(() => {
             build: {
               outDir: 'dist-electron/preload',
               rollupOptions: {
+                external: ['electron'],
                 output: {
                   entryFileNames: '[name].cjs',
-                  format: 'cjs'
-                }
-              }
+                  format: 'cjs',
+                },
+              },
             },
           },
         },

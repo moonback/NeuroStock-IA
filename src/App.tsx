@@ -1662,7 +1662,7 @@ export default function App() {
         }}
       >
         <div className="app-shell text-stone-800 font-sans">
-          <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} assistantName={assistantName} />
+          <AppNavigation activeTab={activeTab} onTabChange={setActiveTab} assistantName={assistantName} stockBadge={lowStockCount} />
 
           <div className="flex-1 min-w-0 flex flex-col w-full relative">
             <Header
