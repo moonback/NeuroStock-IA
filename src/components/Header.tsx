@@ -1,4 +1,4 @@
-import { Download, LogOut, CloudOff, CloudUpload, RefreshCw, Brain, Pause, Play, X, Package, HelpCircle, TrendingUp, AlertTriangle, Settings } from 'lucide-react';
+import { Download, LogOut, CloudOff, CloudUpload, RefreshCw, Package, HelpCircle, TrendingUp, AlertTriangle, Settings, User } from 'lucide-react';
 import type { useEmbeddingGenerator } from '../hooks/useEmbeddingGenerator';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
@@ -52,7 +52,7 @@ export function Header({
   onOpenSettings,
   embeddingGenerator,
 }: HeaderProps) {
-  const { isRunning, isPaused, progress, start, pause, resume, stop, canStart, currentProductName, embeddedCount } = embeddingGenerator;
+  const { isRunning, isPaused, progress, currentProductName } = embeddingGenerator;
   const canSync = isOnline && pendingCount > 0 && !!onSyncNow;
   const [showHelp, setShowHelp] = useState(false);
   const isDesktop = useIsDesktop();
@@ -61,14 +61,14 @@ export function Header({
   return (
     <>
       <header className="sticky top-0 z-40 glass-panel border-b border-stone-200/50 pt-safe transition-all duration-300">
-        <div className={`mx-auto w-full transition-all duration-300 ${isDesktop ? 'px-8 py-1.5 max-w-none' : 'px-4 py-3 max-w-2xl'}`}>
+        <div className={`mx-auto w-full transition-all duration-300 ${isDesktop ? 'px-6 py-2 max-w-none' : 'px-4 py-3 max-w-2xl'}`}>
           {/* Identity row */}
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-4">
             <motion.div
               initial={{ opacity: 0, x: -15 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="min-w-0 flex-1 flex items-center gap-3"
+              className="min-w-0 flex-1 flex items-center gap-4"
             >
               {!isDesktop && (
                 <div className="flex flex-col justify-center min-w-0">
@@ -86,10 +86,11 @@ export function Header({
               )}
 
               {isDesktop && (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="desktop-stat-badge bg-stone-100/80 border-stone-200/60 text-stone-700">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Stat: articles */}
+                  <span className="desktop-stat-badge bg-stone-100/80 border-stone-200/60 text-stone-700 px-2.5 py-1 text-[12px]">
                     <Package className="h-3.5 w-3.5 text-stone-500" />
-                    <span className="tabular">{inventoryLength}</span>
+                    <span className="tabular font-bold">{inventoryLength}</span>
                     <span className="text-stone-400 font-semibold">articles</span>
                   </span>
 
@@ -101,10 +102,10 @@ export function Header({
                         animate={{ opacity: 1, scale: 1, width: 'auto' }}
                         exit={{ opacity: 0, scale: 0.85, width: 0 }}
                         transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-                        className="desktop-stat-badge bg-indigo-50/80 border-indigo-200/50 text-indigo-700 overflow-hidden whitespace-nowrap"
+                        className="desktop-stat-badge bg-indigo-50/80 border-indigo-200/50 text-indigo-700 overflow-hidden whitespace-nowrap px-2.5 py-1 text-[12px]"
                       >
                         <TrendingUp className="h-3.5 w-3.5 text-indigo-500" />
-                        <span className="tabular">{totalItems}</span>
+                        <span className="tabular font-bold">{totalItems}</span>
                         <span className="text-indigo-400 font-semibold">unités</span>
                       </motion.span>
                     )}
@@ -116,7 +117,7 @@ export function Header({
                         animate={{ opacity: 1, scale: 1, width: 'auto' }}
                         exit={{ opacity: 0, scale: 0.85, width: 0 }}
                         transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-                        className="desktop-stat-badge bg-amber-50/80 border-amber-200/50 text-amber-700 overflow-hidden whitespace-nowrap"
+                        className="desktop-stat-badge bg-amber-50/80 border-amber-200/50 text-amber-700 overflow-hidden whitespace-nowrap px-2.5 py-1 text-[12px]"
                       >
                         <motion.span
                           animate={{ rotate: [0, -8, 8, -8, 0] }}
@@ -124,7 +125,7 @@ export function Header({
                         >
                           <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                         </motion.span>
-                        <span className="tabular">{lowStockCount}</span>
+                        <span className="tabular font-bold">{lowStockCount}</span>
                         <span className="text-amber-500 font-semibold">stock faible</span>
                       </motion.span>
                     )}
@@ -132,12 +133,12 @@ export function Header({
 
                   <motion.span
                     layout
-                    className={`desktop-stat-badge ${isOnline ? 'bg-emerald-50/80 border-emerald-200/50 text-emerald-700' : 'bg-rose-50/80 border-rose-200/50 text-rose-700'}`}
+                    className={`desktop-stat-badge px-2.5 py-1 text-[12px] ${isOnline ? 'bg-emerald-50/80 border-emerald-200/50 text-emerald-700' : 'bg-rose-50/80 border-rose-200/50 text-rose-700'}`}
                   >
                     <motion.span
                       animate={isOnline ? { scale: 1 } : { scale: [1, 1.3, 1] }}
                       transition={isOnline ? {} : { duration: 1.2, repeat: Infinity }}
-                      className={`h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                      className={`h-2 w-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`}
                     />
                     <span className="font-semibold">{isOnline ? 'En ligne' : 'Hors-ligne'}</span>
                   </motion.span>
@@ -145,17 +146,18 @@ export function Header({
               )}
             </motion.div>
 
-            {/* Action icons */}
+            {/* Action buttons */}
             <motion.div
               initial={{ opacity: 0, x: 15 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="flex flex-shrink-0 items-center gap-1"
+              className="flex flex-shrink-0 items-center gap-1.5"
             >
+              {/* Email utilisateur — desktop */}
               {/* {isDesktop && (
-                <span className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-xl border border-stone-200 bg-white text-[11px] font-semibold text-stone-600 shadow-xs mr-1">
-                  <User className="h-3 w-3 text-stone-400" />
-                  <span className="max-w-[180px] truncate">{email}</span>
+                <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white/80 text-[11px] font-semibold text-stone-500 shadow-xs mr-1">
+                  <User className="h-3 w-3 text-stone-400 flex-shrink-0" />
+                  <span className="max-w-[160px] truncate">{email}</span>
                 </span>
               )} */}
 
@@ -166,174 +168,108 @@ export function Header({
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={onSyncNow}
                     disabled={isSyncing}
                     aria-label={isSyncing ? 'Synchronisation en cours' : 'Synchroniser les modifications en attente'}
-                    className={`touch-target grid place-items-center rounded-xl border border-amber-200 bg-amber-50/60 text-amber-700 transition-colors duration-200 disabled:opacity-50 cursor-pointer shadow-xs ${isDesktop ? 'h-7 px-2 flex items-center gap-1.5 w-auto' : 'h-10 w-10'
-                      }`}
+                    className={`touch-target flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 font-bold transition-colors duration-200 disabled:opacity-50 cursor-pointer shadow-xs ${isDesktop ? 'h-8 px-3 text-[11px]' : 'h-10 w-10 justify-center'}`}
                   >
                     {isSyncing ? (
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-700" />
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <CloudUpload className="h-3.5 w-3.5 text-amber-700" />
+                      <CloudUpload className="h-3.5 w-3.5" />
                     )}
-                    {isDesktop && <span className="text-[11px] font-bold">{isSyncing ? 'Sync...' : 'Synchroniser'}</span>}
+                    {isDesktop && <span>{isSyncing ? 'Sync...' : 'Synchroniser'}</span>}
                   </motion.button>
                 )}
               </AnimatePresence>
 
               <motion.button
-                whileHover={{ scale: 1.05, rotate: 8 }}
+                whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowHelp(true)}
                 aria-label="Guide des fonctionnalités"
-                className={`touch-target grid place-items-center rounded-xl border border-stone-200 bg-white text-stone-500 shadow-xs transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 ${isDesktop ? 'h-7 px-2 flex items-center gap-1.5 w-auto' : 'h-10 w-10'
-                  }`}
+                className={`touch-target flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white text-stone-500 shadow-xs transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 ${isDesktop ? 'h-8 px-3 text-[11px] font-bold' : 'h-10 w-10 justify-center'}`}
               >
                 <HelpCircle className="h-3.5 w-3.5" />
-                {/* {isDesktop && <span className="text-[11px] font-bold">Aide</span>} */}
+                {isDesktop && <span>Aide</span>}
               </motion.button>
 
               {onOpenSettings && (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.04, rotate: 15 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onOpenSettings}
                   aria-label="Paramètres"
-                  className={`touch-target grid place-items-center rounded-xl border border-stone-200 bg-white text-stone-500 shadow-xs transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 ${isDesktop ? 'h-7 px-2 flex items-center gap-1.5 w-auto' : 'h-10 w-10'
-                    }`}
+                  className={`touch-target flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white text-stone-500 shadow-xs transition-colors duration-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 ${isDesktop ? 'h-8 px-3 text-[11px] font-bold' : 'h-10 w-10 justify-center'}`}
                 >
                   <Settings className="h-3.5 w-3.5" />
-                  {/* {isDesktop && <span className="text-[11px] font-bold">Paramètres</span>} */}
+                  {isDesktop && <span>Paramètres</span>}
                 </motion.button>
               )}
-
-              {/* {showExport && (
-                <div className="relative">
-                  <motion.button
-                    layout
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => (isRunning ? (isPaused ? resume() : pause()) : onRequestVectorize ? onRequestVectorize() : start())}
-                    disabled={false}
-                    aria-label={
-                      isRunning
-                        ? isPaused
-                          ? 'Reprendre la génération'
-                          : 'Mettre en pause'
-                        : `Générer les embeddings (${embeddedCount}/${inventoryLength})`
-                    }
-                    className={`touch-target grid place-items-center rounded-xl border transition-all duration-200 disabled:opacity-50 cursor-pointer shadow-xs ${isRunning
-                      ? isPaused
-                        ? 'border-amber-200 bg-amber-50/50 text-amber-600 animate-pulse'
-                        : 'border-indigo-200 bg-indigo-50/55 text-indigo-600 animate-glow-pulse'
-                      : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                      } ${isDesktop ? 'h-7 px-2 flex items-center gap-1.5 w-auto' : 'h-10 w-10'}`}
-                  >
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.span
-                        key={isRunning ? (isPaused ? 'play' : 'pause') : 'brain'}
-                        initial={{ opacity: 0, scale: 0.6, rotate: -45 }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                        exit={{ opacity: 0, scale: 0.6, rotate: 45 }}
-                        transition={{ duration: 0.18 }}
-                        className="flex items-center gap-1.5"
-                      >
-                        {isRunning ? (
-                          isPaused ? <Play className="h-3.5 w-3.5 text-amber-600" /> : <Pause className="h-3.5 w-3.5 text-indigo-600" />
-                        ) : (
-                          <Brain className="h-3.5 w-3.5" />
-                        )}
-                        {isDesktop && (
-                          <span className="text-[11px] font-bold">
-                            {isRunning ? (isPaused ? 'Reprendre' : 'Pause') : 'Vectoriser'}
-                          </span>
-                        )}
-                      </motion.span>
-                    </AnimatePresence>
-                  </motion.button>
-                  <AnimatePresence>
-                    {isRunning && (
-                      <motion.button
-                        key="stop-btn"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        whileHover={{ scale: 1.15 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={stop}
-                        aria-label="Arrêter la génération"
-                        className="absolute -top-1 -right-1 grid h-4 w-4 place-items-center rounded-full bg-rose-500 text-white text-[9px] font-bold shadow-sm"
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )} */}
-
-              {/* Embedding progress banner */}
-              <AnimatePresence>
-                {isRunning && (
-                  <motion.div
-                    key="embedding-progress"
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginTop: 10 }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                    className="w-full rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 overflow-hidden"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-indigo-800">
-                        Vectorisation {isPaused ? '(en pause)' : 'en cours'}
-                      </span>
-                      <span className="text-xs font-mono text-indigo-700">
-                        {progress.current}/{progress.total} ({progress.percentage}%)
-                      </span>
-                    </div>
-                    <div className="w-full h-2 bg-indigo-200 rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-violet-500"
-                        animate={{ width: `${progress.percentage}%` }}
-                        transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                      />
-                    </div>
-                    {currentProductName && (
-                      <p className="mt-1 text-[10px] text-indigo-600 truncate">En cours : {currentProductName}</p>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               {showExport && (
                 <motion.button
-                  whileHover={{ scale: 1.05, y: -1 }}
+                  whileHover={{ scale: 1.04, y: -1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onExport}
                   aria-label="Exporter l'inventaire en CSV"
-                  className={`touch-target grid place-items-center rounded-xl border border-stone-200 bg-white text-stone-600 shadow-xs transition-colors duration-200 hover:bg-stone-50 hover:text-stone-900 ${isDesktop ? 'h-7 px-2 flex items-center gap-1.5 w-auto' : 'h-10 w-10'
-                    }`}
+                  className={`touch-target flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white text-stone-600 shadow-xs transition-colors duration-200 hover:bg-stone-50 hover:text-stone-900 ${isDesktop ? 'h-8 px-3 text-[11px] font-bold' : 'h-10 w-10 justify-center'}`}
                 >
                   <Download className="h-3.5 w-3.5" />
-                  {/* {isDesktop && <span className="text-[11px] font-bold">Exporter</span>} */}
+                  {isDesktop && <span>Exporter</span>}
                 </motion.button>
               )}
 
+              {/* Séparateur vertical desktop */}
+              {isDesktop && <div className="h-6 w-px bg-stone-200 mx-0.5" />}
+
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onLogout}
                 aria-label="Se déconnecter"
-                className={`touch-target grid place-items-center rounded-xl border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 hover:text-rose-600 transition-colors duration-200 shadow-xs ${isDesktop ? 'h-7 px-2 flex items-center gap-1.5 w-auto' : 'h-10 w-10'
-                  }`}
+                className={`touch-target flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors duration-200 shadow-xs ${isDesktop ? 'h-8 px-3 text-[11px] font-bold' : 'h-10 w-10 justify-center'}`}
               >
                 <LogOut className="h-3.5 w-3.5" />
-                {/* {isDesktop && <span className="text-[11px] font-bold">Déconnexion</span>} */}
+                {isDesktop && <span>Déconnexion</span>}
               </motion.button>
             </motion.div>
           </div>
+
+          {/* Embedding progress banner */}
+          <AnimatePresence>
+            {isRunning && (
+              <motion.div
+                key="embedding-progress"
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                className="w-full rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 overflow-hidden"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-indigo-800">
+                    Vectorisation {isPaused ? '(en pause)' : 'en cours'}
+                  </span>
+                  <span className="text-xs font-mono text-indigo-700">
+                    {progress.current}/{progress.total} ({progress.percentage}%)
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-indigo-200 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                    animate={{ width: `${progress.percentage}%` }}
+                    transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+                  />
+                </div>
+                {currentProductName && (
+                  <p className="mt-1 text-[10px] text-indigo-600 truncate">En cours : {currentProductName}</p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Single connection banner */}
           <AnimatePresence initial={false}>
