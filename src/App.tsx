@@ -172,6 +172,8 @@ export default function App() {
   const [scannerInputMode, setScannerInputMode] = useState<ScannerInputMode>("hardware");
   const [assistantName, setAssistantName] = useState<string>("Lina");
   const [isAssistantNameLoaded, setIsAssistantNameLoaded] = useState(false);
+  const [assistantVoice, setAssistantVoice] = useState<string>("Puck");
+  const [isAssistantVoiceLoaded, setIsAssistantVoiceLoaded] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState<boolean>(true);
   const [isCameraEnabledLoaded, setIsCameraEnabledLoaded] = useState(false);
   const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
@@ -220,6 +222,39 @@ export default function App() {
     localStorage.setItem('neurostock_assistant_name', assistantName);
     void upsertSetting('assistant_name', assistantName);
   }, [assistantName, isAssistantNameLoaded]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAssistantVoice() {
+      const remote = await fetchSetting('assistant_voice');
+      const remoteVoice = typeof remote === 'string' && remote.trim() ? remote.trim() : null;
+      const localStorageVoice = typeof window !== 'undefined' ? localStorage.getItem('neurostock_assistant_voice') : null;
+      const voice = remoteVoice ?? localStorageVoice ?? 'Puck';
+
+      if (!cancelled) {
+        setAssistantVoice(voice);
+        setIsAssistantVoiceLoaded(true);
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('neurostock_assistant_voice', voice);
+        }
+      }
+    }
+
+    void loadAssistantVoice();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAssistantVoiceLoaded) return;
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('neurostock_assistant_voice', assistantVoice);
+    void upsertSetting('assistant_voice', assistantVoice);
+  }, [assistantVoice, isAssistantVoiceLoaded]);
 
   useEffect(() => {
     let cancelled = false;
@@ -923,6 +958,7 @@ export default function App() {
       <GeminiAssistantProvider
         getContext={() => assistantContext}
         assistantName={assistantName}
+        assistantVoice={assistantVoice}
         toolHandlers={{
           searchProduct: async (args) => {
             const rawQuery = String(args.query ?? "");
@@ -1569,8 +1605,10 @@ export default function App() {
               <SettingsTab
                 cameraEnabled={cameraEnabled}
                 assistantName={assistantName}
+                assistantVoice={assistantVoice}
                 onCameraEnabledChange={setCameraEnabled}
                 onAssistantNameChange={setAssistantName}
+                onAssistantVoiceChange={setAssistantVoice}
                 onRequestVectorize={() => setShowVectorizeConfirm(true)}
                 isGeneratingEmbeddings={embeddingGenerator.isRunning}
                 isEmbeddingPaused={embeddingGenerator.isPaused}

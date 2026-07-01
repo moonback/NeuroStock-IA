@@ -117,4 +117,5 @@ export interface GeminiAssistantProviderProps {
   toolHandlers?: ToolHandlers;
   autoRender?: boolean;
   assistantName?: string;
+  assistantVoice?: string;
 }

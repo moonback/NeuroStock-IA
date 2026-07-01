@@ -13,7 +13,7 @@ export const GeminiAssistantContext = createContext<GeminiAssistantContextValue 
 
 const emptyContext = async (): Promise<AssistantExternalContext> => ({ language: 'français', offlineMode: !navigator.onLine });
 
-export function GeminiAssistantProvider({ children, getContext = emptyContext, toolHandlers = {}, autoRender = true, assistantName = 'Lina' }: GeminiAssistantProviderProps) {
+export function GeminiAssistantProvider({ children, getContext = emptyContext, toolHandlers = {}, autoRender = true, assistantName = 'Lina', assistantVoice = 'Puck' }: GeminiAssistantProviderProps) {
   const [state, setState] = useState(AssistantState.Idle);
   const [isOpen, setOpen] = useState(false);
   const [isMinimized, setMinimized] = useState(false);
@@ -98,7 +98,7 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
         },
         onError: (message) => { setError(message); setState(AssistantState.Error); },
       });
-      await session.current.connect(currentContext);
+      await session.current.connect(currentContext, assistantVoice);
       await session.current.startAudio();
       setState(AssistantState.Listening);
       // Play a short welcome message when Lina is opened
@@ -111,7 +111,7 @@ export function GeminiAssistantProvider({ children, getContext = emptyContext, t
       setError(err instanceof Error ? err.message : 'Erreur assistant vocal');
       setState(AssistantState.Error);
     }
-  }, [askPermission, readContext, toolHandlers, rememberProduct]);
+  }, [askPermission, readContext, toolHandlers, rememberProduct, assistantVoice]);
 
   const close = useCallback(async () => {
     await session.current?.disconnect();

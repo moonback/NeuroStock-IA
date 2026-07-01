@@ -22,15 +22,19 @@ export class LiveSession {
   private reconnectAttempts = 0;
   private closedByUser = false;
   private sentAudioChunks = 0;
+  private currentVoice = 'Puck';
+  private currentContext: AssistantExternalContext | null = null;
 
   constructor(private readonly audio = AudioManager.getInstance(), private callbacks: LiveCallbacks = {}) {}
 
   setCallbacks(callbacks: LiveCallbacks): void { this.callbacks = callbacks; }
   isConnected(): boolean { return Boolean(this.session); }
 
-  async connect(context: AssistantExternalContext): Promise<void> {
+  async connect(context: AssistantExternalContext, voice: string = 'Puck'): Promise<void> {
     this.closedByUser = false;
     this.sentAudioChunks = 0;
+    this.currentVoice = voice;
+    this.currentContext = context;
     this.ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
     const prompt = buildSystemPrompt(context);
@@ -40,6 +44,9 @@ export class LiveSession {
       model: MODEL,
       config: {
         responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceName: voice,
+        },
         systemInstruction: { parts: [{ text: prompt }] },
         tools: [{ functionDeclarations }],
       },
@@ -49,7 +56,7 @@ export class LiveSession {
           this.callbacks.onOpen?.();
         },
         onclose: (event: unknown) => {
-          void this.handleClose(context);
+          void this.handleClose();
         },
         onerror: (event: unknown) => {
           const message = event instanceof Error ? event.message : 'Erreur Gemini Live';
@@ -190,15 +197,15 @@ export class LiveSession {
     }
   }
 
-  private async handleClose(context: AssistantExternalContext): Promise<void> {
+  private async handleClose(): Promise<void> {
     this.session = null;
     this.callbacks.onClose?.();
-    if (this.closedByUser || this.reconnectAttempts >= 3) {
+    if (this.closedByUser || this.reconnectAttempts >= 3 || !this.currentContext) {
       return;
     }
     const delay = 500 * 2 ** this.reconnectAttempts;
     this.reconnectAttempts += 1;
-    window.setTimeout(() => void this.connect(context).catch((error: unknown) => {
+    window.setTimeout(() => void this.connect(this.currentContext!, this.currentVoice).catch((error: unknown) => {
       this.callbacks.onError?.(error instanceof Error ? error.message : 'Reconnexion impossible');
     }), delay);
   }

@@ -4,8 +4,10 @@ import { Camera, CameraOff, Bot, Brain, Play, Pause, X } from "lucide-react";
 type SettingsTabProps = {
   cameraEnabled: boolean;
   assistantName: string;
+  assistantVoice: string;
   onCameraEnabledChange: (enabled: boolean) => void;
   onAssistantNameChange: (name: string) => void;
+  onAssistantVoiceChange: (voice: string) => void;
   onRequestVectorize?: () => void;
   isGeneratingEmbeddings?: boolean;
   isEmbeddingPaused?: boolean;
@@ -14,14 +16,27 @@ type SettingsTabProps = {
   onStopEmbedding?: () => void;
 };
 
-export function SettingsTab({ cameraEnabled, assistantName, onCameraEnabledChange, onAssistantNameChange, onRequestVectorize, isGeneratingEmbeddings, isEmbeddingPaused, embeddingProgress, embeddingCurrentProduct, onStopEmbedding }: SettingsTabProps) {
+const VOICE_OPTIONS = [
+  { value: "Puck", label: "Puck (voix par défaut)" },
+  { value: "Charon", label: "Charon" },
+  { value: "Kore", label: "Kore" },
+  { value: "Fenrir", label: "Fenrir" },
+  { value: "Aoede", label: "Aoede" },
+];
+
+export function SettingsTab({ cameraEnabled, assistantName, assistantVoice, onCameraEnabledChange, onAssistantNameChange, onAssistantVoiceChange, onRequestVectorize, isGeneratingEmbeddings, isEmbeddingPaused, embeddingProgress, embeddingCurrentProduct, onStopEmbedding }: SettingsTabProps) {
   const [localName, setLocalName] = useState(assistantName);
   const [nameDraft, setNameDraft] = useState(assistantName);
+  const [localVoice, setLocalVoice] = useState(assistantVoice);
 
   useEffect(() => {
     setLocalName(assistantName);
     setNameDraft(assistantName);
   }, [assistantName]);
+
+  useEffect(() => {
+    setLocalVoice(assistantVoice);
+  }, [assistantVoice]);
 
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +79,36 @@ export function SettingsTab({ cameraEnabled, assistantName, onCameraEnabledChang
             Sauver
           </button>
         </form>
+      </div>
+
+      {/* Assistant voice */}
+      <div className="rounded-2xl border border-stone-200/60 bg-white p-4 shadow-sm space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-xl border border-violet-200 bg-violet-50 text-violet-600">
+            <Bot className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-stone-900">Voix de l'assistant</p>
+            <p className="text-[11px] font-medium text-stone-400 mt-0.5">
+              Choisissez la voix pour les réponses audio
+            </p>
+          </div>
+        </div>
+        <select
+          value={localVoice}
+          onChange={(e) => {
+            const newVoice = e.target.value;
+            setLocalVoice(newVoice);
+            onAssistantVoiceChange(newVoice);
+          }}
+          className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 cursor-pointer"
+        >
+          {VOICE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Camera toggle */}
