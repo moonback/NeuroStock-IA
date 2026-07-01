@@ -24,7 +24,11 @@ export type ToolName =
   | 'deleteProduct'
   | 'exportCSV'
   | 'navigateTo'
-  | 'getDashboardSummary';
+  | 'getDashboardSummary'
+  | 'batchUpdatePrices'
+  | 'getCategoryInventory'
+  | 'getOutOfStockList'
+  | 'getLowStockList';
 
 export interface GeminiToolCall {
   id: string;
@@ -117,4 +121,121 @@ export interface GeminiAssistantProviderProps {
   toolHandlers?: ToolHandlers;
   autoRender?: boolean;
   assistantName?: string;
+}
+
+// ============================================================================
+// Types pour les nouveaux tools multi-actions
+// ============================================================================
+
+/**
+ * Structure d'une mise à jour de prix dans un batch
+ */
+export interface PriceUpdateEntry {
+  query: string;
+  salesPrice?: number;
+  purchasePrice?: number;
+}
+
+/**
+ * Résultat d'une mise à jour de prix individuelle
+ */
+export interface PriceUpdateResult {
+  query: string;
+  barcode?: string;
+  name?: string;
+  success: boolean;
+  salesPrice?: number;
+  purchasePrice?: number;
+  error?: string;
+  ambiguous?: boolean;
+  matches?: Array<{
+    barcode: string;
+    name: string;
+    brand?: string;
+  }>;
+}
+
+/**
+ * Réponse du tool batchUpdatePrices
+ */
+export interface BatchUpdatePricesResponse {
+  total: number;
+  success: number;
+  failed: number;
+  results: PriceUpdateResult[];
+}
+
+/**
+ * Produit résumé pour les listes d'inventaire
+ */
+export interface ProductSummary {
+  barcode: string;
+  name: string;
+  brand?: string;
+  category?: string;
+  quantity: number;
+  purchasePrice?: number;
+  salesPrice?: number;
+}
+
+/**
+ * Réponse du tool getCategoryInventory
+ */
+export interface CategoryInventoryResponse {
+  categoryName: string;
+  count: number;
+  totalStock: number;
+  totalValue: number;
+  products: ProductSummary[];
+}
+
+/**
+ * Réponse du tool getOutOfStockList
+ */
+export interface OutOfStockListResponse {
+  count: number;
+  categoryFilter: string;
+  products: ProductSummary[];
+}
+
+/**
+ * Réponse du tool getLowStockList
+ */
+export interface LowStockListResponse {
+  count: number;
+  threshold: number;
+  categoryFilter: string;
+  excludeOutOfStock: boolean;
+  products: ProductSummary[];
+}
+
+/**
+ * Arguments pour batchUpdatePrices
+ */
+export interface BatchUpdatePricesArgs {
+  updates: PriceUpdateEntry[];
+}
+
+/**
+ * Arguments pour getCategoryInventory
+ */
+export interface GetCategoryInventoryArgs {
+  categoryName: string;
+  includeOutOfStock?: boolean;
+}
+
+/**
+ * Arguments pour getOutOfStockList
+ */
+export interface GetOutOfStockListArgs {
+  categoryFilter?: string;
+}
+
+/**
+ * Arguments pour getLowStockList
+ */
+export interface GetLowStockListArgs {
+  threshold?: number;
+  categoryFilter?: string;
+  excludeOutOfStock?: boolean;
 }

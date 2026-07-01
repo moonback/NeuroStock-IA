@@ -1465,6 +1465,191 @@ export default function App() {
               results,
             };
           },
+          batchUpdatePrices: async (args) => {
+            const updates = Array.isArray(args.updates) ? args.updates : [];
+            if (!updates.length) {
+              throw new Error("Aucune mise à jour de prix fournie");
+            }
+
+            const results = [];
+            const currentInventory = inventoryRef.current;
+
+            for (const update of updates) {
+              try {
+                const query = String(update.query ?? "").trim();
+                if (!query) {
+                  results.push({ query: query, success: false, error: "Query vide" });
+                  continue;
+                }
+
+                const { item, ambiguousMatches } = findInventoryItemForAssistant(currentInventory, { query });
+
+                if (ambiguousMatches.length > 0) {
+                  results.push({
+                    query,
+                    success: false,
+                    ambiguous: true,
+                    matches: ambiguousMatches.map((m) => ({ barcode: m.barcode, name: m.name, brand: m.brand })),
+                  });
+                  continue;
+                }
+
+                if (!item) {
+                  results.push({ query, success: false, error: "Produit non trouvé" });
+                  continue;
+                }
+
+                const updatedItem = { ...item, lastUpdated: Date.now() };
+                let hasChanges = false;
+
+                if (Number.isFinite(Number(update.salesPrice))) {
+                  updatedItem.salesPrice = Math.max(0, Number(update.salesPrice));
+                  hasChanges = true;
+                }
+
+                if (Number.isFinite(Number(update.purchasePrice))) {
+                  updatedItem.purchasePrice = Math.max(0, Number(update.purchasePrice));
+                  hasChanges = true;
+                }
+
+                if (!hasChanges) {
+                  results.push({ query, barcode: item.barcode, name: item.name, success: false, error: "Aucun prix fourni" });
+                  continue;
+                }
+
+                await syncItem(updatedItem);
+                setInventory((prev) => {
+                  const next = prev.map((candidate) => candidate.barcode === item.barcode ? updatedItem : candidate);
+                  inventoryRef.current = next;
+                  return next;
+                });
+
+                results.push({
+                  query,
+                  barcode: item.barcode,
+                  name: item.name,
+                  success: true,
+                  salesPrice: updatedItem.salesPrice,
+                  purchasePrice: updatedItem.purchasePrice,
+                });
+              } catch (error) {
+                results.push({
+                  query: String(update.query ?? ""),
+                  success: false,
+                  error: error instanceof Error ? error.message : "Erreur inconnue",
+                });
+              }
+            }
+
+            const successCount = results.filter((r) => r.success).length;
+            const failedCount = results.filter((r) => !r.success).length;
+
+            return {
+              total: updates.length,
+              success: successCount,
+              failed: failedCount,
+              results,
+            };
+          },
+          getCategoryInventory: async (args) => {
+            const categoryName = String(args.categoryName ?? "").trim().toLowerCase();
+            const includeOutOfStock = args.includeOutOfStock !== false;
+
+            if (!categoryName) {
+              throw new Error("Nom de catégorie requis");
+            }
+
+            const products = inventory.filter((item) => {
+              const itemCategory = (item.category ?? "").trim().toLowerCase();
+              const matchesCategory = itemCategory === categoryName || itemCategory.includes(categoryName);
+              const hasStock = includeOutOfStock || item.quantity > 0;
+              return matchesCategory && hasStock;
+            });
+
+            return {
+              categoryName,
+              count: products.length,
+              totalStock: products.reduce((sum, item) => sum + item.quantity, 0),
+              totalValue: products.reduce((sum, item) => sum + item.quantity * (item.purchasePrice ?? 0), 0),
+              products: products.map((item) => ({
+                barcode: item.barcode,
+                name: item.name,
+                brand: item.brand,
+                quantity: item.quantity,
+                purchasePrice: item.purchasePrice,
+                salesPrice: item.salesPrice,
+              })),
+            };
+          },
+          getOutOfStockList: async (args) => {
+            const categoryFilter = args.categoryFilter ? String(args.categoryFilter).trim().toLowerCase() : null;
+
+            const products = inventory.filter((item) => {
+              const isOutOfStock = item.quantity === 0;
+              if (!isOutOfStock) return false;
+
+              if (categoryFilter) {
+                const itemCategory = (item.category ?? "").trim().toLowerCase();
+                return itemCategory === categoryFilter || itemCategory.includes(categoryFilter);
+              }
+
+              return true;
+            });
+
+            return {
+              count: products.length,
+              categoryFilter: categoryFilter ?? "toutes",
+              products: products.map((item) => ({
+                barcode: item.barcode,
+                name: item.name,
+                brand: item.brand,
+                category: item.category,
+                quantity: 0,
+                purchasePrice: item.purchasePrice,
+                salesPrice: item.salesPrice,
+              })),
+            };
+          },
+          getLowStockList: async (args) => {
+            const threshold = Number.isFinite(Number(args.threshold)) ? Math.max(1, Number(args.threshold)) : 5;
+            const categoryFilter = args.categoryFilter ? String(args.categoryFilter).trim().toLowerCase() : null;
+            const excludeOutOfStock = args.excludeOutOfStock === true;
+
+            const products = inventory.filter((item) => {
+              const isLowStock = item.quantity <= threshold && item.quantity > 0;
+              const isOutOfStock = item.quantity === 0;
+
+              if (excludeOutOfStock && isOutOfStock) return false;
+              if (!excludeOutOfStock && (isLowStock || isOutOfStock)) {
+                // inclure les deux
+              } else if (!isLowStock) {
+                return false;
+              }
+
+              if (categoryFilter) {
+                const itemCategory = (item.category ?? "").trim().toLowerCase();
+                return itemCategory === categoryFilter || itemCategory.includes(categoryFilter);
+              }
+
+              return true;
+            });
+
+            return {
+              count: products.length,
+              threshold,
+              categoryFilter: categoryFilter ?? "toutes",
+              excludeOutOfStock,
+              products: products.map((item) => ({
+                barcode: item.barcode,
+                name: item.name,
+                brand: item.brand,
+                category: item.category,
+                quantity: item.quantity,
+                purchasePrice: item.purchasePrice,
+                salesPrice: item.salesPrice,
+              })),
+            };
+          },
         }}
       >
         <div className="app-shell text-stone-800 font-sans">

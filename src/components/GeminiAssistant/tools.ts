@@ -49,6 +49,64 @@ export const tools: ToolDefinition[] = [
   { name: 'renameCategory', description: 'Renommer une catégorie', sensitive: true, parameters: { type: 'object', properties: { oldName: { type: 'string' }, newName: { type: 'string' } }, required: ['oldName', 'newName'] } },
   { name: 'deleteProduct', description: 'Supprimer un produit', sensitive: true, parameters: { type: 'object', properties: { barcode: { type: 'string' } }, required: ['barcode'] } },
   { name: 'exportCSV', description: 'Exporter en CSV', sensitive: true, parameters: { type: 'object', properties: {} } },
+  {
+    name: 'batchUpdatePrices',
+    description: 'Modifier plusieurs prix de vente ou d\'achat en une seule commande (ex: "mets le Coca à 1.80, le Fanta à 1.60 et le Sprite à 1.70")',
+    sensitive: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        updates: {
+          type: 'array',
+          description: 'Liste des mises à jour de prix',
+          items: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Nom ou code-barres du produit' },
+              salesPrice: { type: 'number', description: 'Nouveau prix de vente' },
+              purchasePrice: { type: 'number', description: 'Nouveau prix d\'achat' },
+            },
+            required: ['query'],
+          },
+        },
+      },
+      required: ['updates'],
+    },
+  },
+  {
+    name: 'getCategoryInventory',
+    description: 'Obtenir tous les produits d\'une catégorie spécifique avec leurs détails (stock, prix, etc.)',
+    parameters: {
+      type: 'object',
+      properties: {
+        categoryName: { type: 'string', description: 'Nom de la catégorie' },
+        includeOutOfStock: { type: 'boolean', description: 'Inclure les produits en rupture (par défaut: true)' },
+      },
+      required: ['categoryName'],
+    },
+  },
+  {
+    name: 'getOutOfStockList',
+    description: 'Obtenir la liste de tous les produits en rupture de stock (quantité = 0)',
+    parameters: {
+      type: 'object',
+      properties: {
+        categoryFilter: { type: 'string', description: 'Filtrer par catégorie (optionnel)' },
+      },
+    },
+  },
+  {
+    name: 'getLowStockList',
+    description: 'Obtenir la liste de tous les produits en stock faible (quantité <= seuil)',
+    parameters: {
+      type: 'object',
+      properties: {
+        threshold: { type: 'number', description: 'Seuil de stock faible (par défaut: 5)' },
+        categoryFilter: { type: 'string', description: 'Filtrer par catégorie (optionnel)' },
+        excludeOutOfStock: { type: 'boolean', description: 'Exclure les produits en rupture (par défaut: false)' },
+      },
+    },
+  },
 ];
 
 export const sensitiveTools = new Set(tools.filter((tool) => tool.sensitive).map((tool) => tool.name));
