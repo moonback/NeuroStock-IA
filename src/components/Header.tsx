@@ -348,13 +348,13 @@ export function Header({
                 onClick={canSync ? onSyncNow : undefined}
                 disabled={!canSync}
                 aria-label={`Statut réseau : ${!isOnline ? 'Hors-ligne' : `${pendingCount} en attente`}${canSync ? ', touchez pour synchroniser' : ''}`}
-                className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition overflow-hidden ${!isOnline ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-amber-600 bg-amber-50 border-amber-200'
+                className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition overflow-hidden ${!isOnline ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-700' : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-700'
                   } ${canSync ? 'tap-active cursor-pointer' : 'cursor-default'}`}
               >
                 {!isOnline ? (
                   <CloudOff className="h-3.5 w-3.5 flex-shrink-0" />
                 ) : (
-                  <span className="h-2 w-2 flex-shrink-0 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="h-2 w-2 flex-shrink-0 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
                 )}
                 <span className="min-w-0 flex-1 truncate">
                   {!isOnline ? 'Hors-ligne' : `${pendingCount} opération${pendingCount > 1 ? 's' : ''} en attente`}
