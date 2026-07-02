@@ -18,7 +18,7 @@ function m() {
       return `data:image/png;base64,${d.readFileSync(n).toString("base64")}`;
   return "";
 }
-function h() {
+function u() {
   a = new l({
     width: 460,
     height: 420,
@@ -187,6 +187,8 @@ function p() {
     minWidth: 900,
     minHeight: 600,
     show: !1,
+    fullscreen: !0,
+    kiosk: !0,
     webPreferences: {
       preload: t.join(s, "../preload/index.cjs"),
       nodeIntegration: !1,
@@ -202,7 +204,7 @@ function p() {
   }), c ? e.loadURL(c) : e.loadFile(t.join(process.env.DIST, "index.html"));
 }
 i.whenReady().then(() => {
-  h(), p();
+  u(), p();
 });
 i.on("window-all-closed", () => {
   process.platform !== "darwin" && (i.quit(), e = null);

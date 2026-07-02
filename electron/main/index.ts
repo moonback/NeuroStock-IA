@@ -209,6 +209,8 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: false,
+    fullscreen: true,
+    kiosk: true,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.cjs'),
       nodeIntegration: false,
